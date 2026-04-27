@@ -1,0 +1,1 @@
+UPDATE public.jobs SET status = 'completed'::public.job_status, progress = 100, updated_at = now() WHERE id = '47b2742a-2df4-4b4e-9bba-839862c6028e';
