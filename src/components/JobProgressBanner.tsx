@@ -26,6 +26,13 @@ const LABELS: Record<string, string> = {
   parquet_import: "Parquet-import",
 };
 
+function labelFor(type: string): string {
+  if (LABELS[type]) return LABELS[type];
+  if (type.startsWith("mcp_fetch:")) return `Henter ${type.slice("mcp_fetch:".length)}`;
+  if (type.startsWith("plugin_import:")) return `Import: ${type.slice("plugin_import:".length)}`;
+  return type;
+}
+
 function processedCount(job: Job): number {
   const m = job.metadata ?? {};
   return (
