@@ -167,12 +167,23 @@ export default function Plugins() {
     setFetchingTemplate(templateId);
 
     try {
+      const { data: running } = await supabase
+        .from("jobs")
+        .select("id")
+        .in("status", ["queued", "running"])
+        .like("type", "mcp_fetch:%")
+        .limit(1);
+      if (running && running.length > 0) {
+        toast.error("En henting kjører allerede. Vent til den er ferdig.");
+        return;
+      }
+
       const pluginId = crypto.randomUUID();
       const { data: job } = await supabase.from("jobs").insert({
         type: `mcp_fetch:${tpl.name}`,
         status: "running",
         total_batches: 0,
-        metadata: { plugin_id: pluginId, template_id: templateId },
+        metadata: { plugin_id: pluginId, template_id: templateId, processed: 0 },
       }).select("id").single();
       if (!job) throw new Error("Failed to create job");
 
