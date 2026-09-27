@@ -31,7 +31,8 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { template_id, plugin_id, job_id, after_orgnr, running_total, failures } = await req.json();
+    const { template_id, plugin_id, job_id, after_orgnr, running_total, failures, processed, total_companies } =
+      await req.json();
     const template = TEMPLATES[template_id];
     if (!template || !plugin_id || !job_id) {
       return new Response(JSON.stringify({ error: "Invalid params", valid_templates: Object.keys(TEMPLATES) }), {
@@ -39,6 +40,14 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Resolve the company universe once, then carry it through the chain for progress reporting.
+    let totalCompanies = Number(total_companies ?? 0);
+    if (!totalCompanies) {
+      const { count } = await supabase.from("companies").select("id", { count: "exact", head: true });
+      totalCompanies = count ?? 0;
+    }
+    const doneSoFar = Number(processed ?? 0);
 
     let query = supabase.from("companies").select("orgnr").order("orgnr").limit(BATCH);
     if (after_orgnr) query = query.gt("orgnr", after_orgnr);
