@@ -41,6 +41,7 @@ function processedCount(job: Job): number {
     m.companies_processed ??
     m.investors_processed ??
     m.rows_processed ??
+    m.total_fetched ??
     0
   );
 }
