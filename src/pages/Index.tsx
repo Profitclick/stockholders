@@ -9,6 +9,7 @@ import { CsvImportDialog } from "@/components/csv-import/CsvImportDialog";
 import { ParquetImportDialog } from "@/components/parquet-import/ParquetImportDialog";
 import { toast } from "sonner";
 import { SourceHealth } from "@/components/SourceHealth";
+import { JobProgressBanner } from "@/components/JobProgressBanner";
 
 interface Stats {
   investors: number;
@@ -291,6 +292,8 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
+
+      <JobProgressBanner />
 
       <Card>
         <CardHeader>
