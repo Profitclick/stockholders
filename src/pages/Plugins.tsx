@@ -40,10 +40,10 @@ interface PluginLog {
 const BATCH_SIZE = 5000;
 
 const MCP_TEMPLATES = [
-  { id: "skattefunn", name: "SkatteFUNN Projects", desc: "R&D tax credit projects per company", icon: "🔬" },
-  { id: "grants", name: "Norwegian Grants", desc: "Innovation Norway / Enova grants", icon: "💰" },
-  { id: "eu_grants", name: "EU Grants", desc: "Horizon Europe, ERC awards", icon: "🇪🇺" },
-  { id: "research_council", name: "Research Council", desc: "Forskningsrådet funding", icon: "🎓" },
+  { id: "grants", name: "Tilskudd (Innovasjon Norge/Enova)", desc: "Innvilgede tilskudd med beløp, dato og kategori", icon: "💰" },
+  { id: "skattefunn", name: "SkatteFUNN", desc: "Godkjente FoU-prosjekter med skattefradrag", icon: "🔬" },
+  { id: "research_council", name: "Forskningsrådet", desc: "NFR-tildelinger, prosjekttittel og periode", icon: "🎓" },
+  { id: "eu_grants", name: "EU-tildelinger", desc: "Horizon Europe, ERC og andre EU-programmer", icon: "🇪🇺" },
 ];
 
 function parseFile(file: File): Promise<Record<string, unknown>[]> {
