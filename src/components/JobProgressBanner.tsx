@@ -140,7 +140,7 @@ export function JobProgressBanner() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="flex items-center gap-2 text-sm font-medium">
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  {LABELS[job.type] ?? job.type}
+                  {labelFor(job.type)}
                 </span>
                 <span className="text-sm font-semibold tabular-nums">{pct.toFixed(1)}%</span>
               </div>
