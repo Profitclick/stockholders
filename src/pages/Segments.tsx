@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Download, Loader2, UserCheck, Users } from "lucide-react";
+import { PlaybookStudio } from "@/components/PlaybookStudio";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
@@ -118,6 +119,10 @@ export default function Segments() {
           <Users className="mr-2 h-4 w-4" /> Create Lookalike
         </Button>
       </div>
+
+      <PlaybookStudio />
+
+      <h2 className="text-lg font-semibold text-foreground pt-2">Lagrede segmenter</h2>
 
       <Card>
         <CardContent className="p-0">

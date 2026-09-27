@@ -166,6 +166,174 @@ export type Database = {
         }
         Relationships: []
       }
+      company_signals: {
+        Row: {
+          board_size: number | null
+          ceo_name: string | null
+          chair_name: string | null
+          company_age_years: number | null
+          contract_count: number
+          contract_value: number
+          email: string | null
+          equity: number | null
+          eu_grants_count: number
+          founded_date: string | null
+          grants_count: number
+          has_capital_increase: boolean
+          has_majority_change: boolean
+          has_new_shareholder: boolean
+          industry: string | null
+          ip_rights_count: number
+          lead_score: number
+          municipality: string | null
+          municipality_no: string | null
+          nace_code: string | null
+          nace_prefix: string | null
+          name: string
+          open_jobs_count: number
+          operating_profit: number | null
+          org_form: string | null
+          orgnr: string
+          phone: string | null
+          postcode: string | null
+          profit_margin: number | null
+          research_council_count: number
+          revenue: number | null
+          skattefunn_count: number
+          total_debt: number | null
+          trigger_count: number
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          board_size?: number | null
+          ceo_name?: string | null
+          chair_name?: string | null
+          company_age_years?: number | null
+          contract_count?: number
+          contract_value?: number
+          email?: string | null
+          equity?: number | null
+          eu_grants_count?: number
+          founded_date?: string | null
+          grants_count?: number
+          has_capital_increase?: boolean
+          has_majority_change?: boolean
+          has_new_shareholder?: boolean
+          industry?: string | null
+          ip_rights_count?: number
+          lead_score?: number
+          municipality?: string | null
+          municipality_no?: string | null
+          nace_code?: string | null
+          nace_prefix?: string | null
+          name: string
+          open_jobs_count?: number
+          operating_profit?: number | null
+          org_form?: string | null
+          orgnr: string
+          phone?: string | null
+          postcode?: string | null
+          profit_margin?: number | null
+          research_council_count?: number
+          revenue?: number | null
+          skattefunn_count?: number
+          total_debt?: number | null
+          trigger_count?: number
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          board_size?: number | null
+          ceo_name?: string | null
+          chair_name?: string | null
+          company_age_years?: number | null
+          contract_count?: number
+          contract_value?: number
+          email?: string | null
+          equity?: number | null
+          eu_grants_count?: number
+          founded_date?: string | null
+          grants_count?: number
+          has_capital_increase?: boolean
+          has_majority_change?: boolean
+          has_new_shareholder?: boolean
+          industry?: string | null
+          ip_rights_count?: number
+          lead_score?: number
+          municipality?: string | null
+          municipality_no?: string | null
+          nace_code?: string | null
+          nace_prefix?: string | null
+          name?: string
+          open_jobs_count?: number
+          operating_profit?: number | null
+          org_form?: string | null
+          orgnr?: string
+          phone?: string | null
+          postcode?: string | null
+          profit_margin?: number | null
+          research_council_count?: number
+          revenue?: number | null
+          skattefunn_count?: number
+          total_debt?: number | null
+          trigger_count?: number
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      contract_awards: {
+        Row: {
+          awarded_name: string | null
+          awarded_name_norm: string | null
+          buyer_name: string | null
+          buyer_orgnr: string | null
+          cpv_codes: Json | null
+          created_at: string
+          currency: string | null
+          doffin_url: string | null
+          estimated_value: number | null
+          heading: string | null
+          id: string
+          matched_orgnr: string | null
+          notice_id: string
+          publication_date: string | null
+        }
+        Insert: {
+          awarded_name?: string | null
+          awarded_name_norm?: string | null
+          buyer_name?: string | null
+          buyer_orgnr?: string | null
+          cpv_codes?: Json | null
+          created_at?: string
+          currency?: string | null
+          doffin_url?: string | null
+          estimated_value?: number | null
+          heading?: string | null
+          id?: string
+          matched_orgnr?: string | null
+          notice_id: string
+          publication_date?: string | null
+        }
+        Update: {
+          awarded_name?: string | null
+          awarded_name_norm?: string | null
+          buyer_name?: string | null
+          buyer_orgnr?: string | null
+          cpv_codes?: Json | null
+          created_at?: string
+          currency?: string | null
+          doffin_url?: string | null
+          estimated_value?: number | null
+          heading?: string | null
+          id?: string
+          matched_orgnr?: string | null
+          notice_id?: string
+          publication_date?: string | null
+        }
+        Relationships: []
+      }
       exports_archive: {
         Row: {
           created_at: string
@@ -669,8 +837,14 @@ export type Database = {
         Args: { p_limit?: number; p_seed_profile: Json }
         Returns: Json
       }
+      jsonb_arr: { Args: { j: Json }; Returns: Json }
+      jsonb_obj: { Args: { j: Json }; Returns: Json }
       jsonb_object_keys_count: { Args: { j: Json }; Returns: number }
+      normalize_company_name: { Args: { p_name: string }; Returns: string }
+      refresh_company_signals: { Args: never; Returns: Json }
       refresh_pipeline_stats: { Args: never; Returns: undefined }
+      safe_date: { Args: { t: string }; Returns: string }
+      safe_numeric: { Args: { t: string }; Returns: number }
     }
     Enums: {
       dataset_type:

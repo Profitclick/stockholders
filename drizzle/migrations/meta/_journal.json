@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790528006834,
+      "tag": "0000_create_company_signals_and_contract_awards",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790528052029,
+      "tag": "0001_create_refresh_company_signals",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790528109474,
+      "tag": "0002_fix_refresh_company_signals_json_guards",
+      "breakpoints": true
+    }
+  ]
+}
