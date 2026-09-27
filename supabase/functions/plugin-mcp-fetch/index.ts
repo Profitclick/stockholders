@@ -62,7 +62,18 @@ Deno.serve(async (req) => {
         .eq("plugin_id", plugin_id);
       await supabase.from("plugins").update({ row_count: count ?? 0 }).eq("id", plugin_id);
       await supabase.rpc("cross_reference_plugin", { p_plugin_id: plugin_id });
-      await supabase.from("jobs").update({ status: "completed", progress: 100 }).eq("id", job_id);
+      await supabase.from("jobs").update({
+        status: "completed",
+        progress: 100,
+        metadata: {
+          template_id,
+          source: "allemannsdata",
+          processed: doneSoFar,
+          total: totalCompanies || doneSoFar,
+          rows_found: running_total ?? 0,
+          failures: failures ?? 0,
+        },
+      }).eq("id", job_id);
       await supabase.from("plugin_logs").insert({
         plugin_id,
         action: "mcp_fetch_completed",
