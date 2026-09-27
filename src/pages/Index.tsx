@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { CsvImportDialog } from "@/components/csv-import/CsvImportDialog";
 import { ParquetImportDialog } from "@/components/parquet-import/ParquetImportDialog";
 import { toast } from "sonner";
+import { SourceHealth } from "@/components/SourceHealth";
 
 interface Stats {
   investors: number;
@@ -315,6 +316,10 @@ export default function Dashboard() {
           </p>
         </CardContent>
       </Card>
+
+      <SourceHealth />
+
+
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {statCards.map((s) => (
