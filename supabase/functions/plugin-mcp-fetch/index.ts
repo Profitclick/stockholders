@@ -135,18 +135,42 @@ Deno.serve(async (req) => {
       });
     }
 
+    const newProcessed = doneSoFar + companies.length;
+    const pct = totalCompanies > 0 ? Math.min(100, (newProcessed / totalCompanies) * 100) : 0;
+
     await supabase.from("jobs").update({
       status: "running",
-      metadata: { last_orgnr: lastOrgnr, total_fetched: newTotal, failures: newFailures, source: "allemannsdata" },
+      progress: pct,
+      current_batch: Math.ceil(newProcessed / BATCH),
+      total_batches: totalCompanies > 0 ? Math.ceil(totalCompanies / BATCH) : 0,
+      metadata: {
+        template_id,
+        source: "allemannsdata",
+        last_orgnr: lastOrgnr,
+        processed: newProcessed,
+        total: totalCompanies,
+        rows_found: newTotal,
+        failures: newFailures,
+      },
     }).eq("id", job_id);
 
     supabase.functions.invoke("plugin-mcp-fetch", {
-      body: { template_id, plugin_id, job_id, after_orgnr: lastOrgnr, running_total: newTotal, failures: newFailures },
+      body: {
+        template_id,
+        plugin_id,
+        job_id,
+        after_orgnr: lastOrgnr,
+        running_total: newTotal,
+        failures: newFailures,
+        processed: newProcessed,
+        total_companies: totalCompanies,
+      },
     }).catch(() => {});
 
-    return new Response(JSON.stringify({ inserted: rows.length, failed, last_orgnr: lastOrgnr, running_total: newTotal }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ inserted: rows.length, failed, last_orgnr: lastOrgnr, running_total: newTotal, processed: newProcessed }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (err) {
     console.error("MCP fetch error:", err);
     return new Response(JSON.stringify({ error: String(err) }), {
