@@ -570,6 +570,48 @@ export type Database = {
         }
         Relationships: []
       }
+      person_holdings: {
+        Row: {
+          birth_year: number | null
+          change_type: string
+          company: string | null
+          id: number
+          orgnr: string
+          pct_2024: number | null
+          pct_2025: number | null
+          postal: string | null
+          shareholder_name: string
+          shares_2024: number | null
+          shares_2025: number | null
+        }
+        Insert: {
+          birth_year?: number | null
+          change_type?: string
+          company?: string | null
+          id?: number
+          orgnr: string
+          pct_2024?: number | null
+          pct_2025?: number | null
+          postal?: string | null
+          shareholder_name: string
+          shares_2024?: number | null
+          shares_2025?: number | null
+        }
+        Update: {
+          birth_year?: number | null
+          change_type?: string
+          company?: string | null
+          id?: number
+          orgnr?: string
+          pct_2024?: number | null
+          pct_2025?: number | null
+          postal?: string | null
+          shareholder_name?: string
+          shares_2024?: number | null
+          shares_2025?: number | null
+        }
+        Relationships: []
+      }
       pipeline_stats: {
         Row: {
           key: string
@@ -818,6 +860,45 @@ export type Database = {
           },
         ]
       }
+      user_profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -837,6 +918,13 @@ export type Database = {
         Args: { p_limit?: number; p_seed_profile: Json }
         Returns: Json
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       jsonb_arr: { Args: { j: Json }; Returns: Json }
       jsonb_obj: { Args: { j: Json }; Returns: Json }
       jsonb_object_keys_count: { Args: { j: Json }; Returns: number }
@@ -847,6 +935,7 @@ export type Database = {
       safe_numeric: { Args: { t: string }; Returns: number }
     }
     Enums: {
+      app_role: "admin" | "user"
       dataset_type:
         | "shareholder"
         | "price"
@@ -984,6 +1073,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       dataset_type: [
         "shareholder",
         "price",

@@ -22,6 +22,13 @@
       "when": 1790528109474,
       "tag": "0002_fix_refresh_company_signals_json_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792586338288,
+      "tag": "0003_owner_auth_and_person_holdings",
+      "breakpoints": true
     }
   ]
 }
