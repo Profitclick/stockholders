@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const EXAMPLES = [
   "Hvilke kommuner har flest majoritetseierskifter fra 2024 til 2025?",
@@ -73,7 +75,7 @@ export default function OwnershipAsk() {
         <Card>
           <CardHeader><CardTitle className="text-base">Svar</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <div className="text-sm whitespace-pre-wrap leading-relaxed">{answer}</div>
+            <div className="text-sm leading-relaxed space-y-2 [&_table]:w-full [&_th]:text-left [&_th]:border-b [&_td]:py-1 [&_td]:border-b [&_td]:border-border [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"><ReactMarkdown remarkPlugins={[remarkGfm]}>{answer}</ReactMarkdown></div>
             {matches.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {matches.map((m) => <Badge key={m.orgnr} variant="secondary">{m.name} · {m.orgnr}</Badge>)}
