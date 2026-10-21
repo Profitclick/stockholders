@@ -929,6 +929,7 @@ export type Database = {
       jsonb_obj: { Args: { j: Json }; Returns: Json }
       jsonb_object_keys_count: { Args: { j: Json }; Returns: number }
       normalize_company_name: { Args: { p_name: string }; Returns: string }
+      ownership_ai_context: { Args: { q: string }; Returns: Json }
       refresh_company_signals: { Args: never; Returns: Json }
       refresh_pipeline_stats: { Args: never; Returns: undefined }
       safe_date: { Args: { t: string }; Returns: string }
