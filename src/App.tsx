@@ -15,6 +15,7 @@ import AuditLog from "./pages/AuditLog";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import PersonOwners from "./pages/PersonOwners";
+import OwnershipAsk from "./pages/OwnershipAsk";
 import { AuthProvider } from "@/hooks/useAuth";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/plugins" element={<Plugins />} />
             <Route path="/audit-log" element={<AuditLog />} />
             <Route path="/eiere" element={<PersonOwners />} />
+            <Route path="/spor" element={<OwnershipAsk />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

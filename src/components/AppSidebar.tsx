@@ -7,6 +7,7 @@ import {
   Archive,
   Puzzle,
   ScrollText,
+  Sparkles,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -32,6 +33,7 @@ const items = [
   { title: "Plugins", url: "/plugins", icon: Puzzle },
   { title: "Audit Log", url: "/audit-log", icon: ScrollText },
   { title: "Personeiere 🔒", url: "/eiere", icon: Users },
+  { title: "Spør om eierskap 🔒", url: "/spor", icon: Sparkles },
 ];
 
 export function AppSidebar() {
