@@ -31,6 +31,7 @@ const items = [
   { title: "Exports Archive", url: "/exports", icon: Archive },
   { title: "Plugins", url: "/plugins", icon: Puzzle },
   { title: "Audit Log", url: "/audit-log", icon: ScrollText },
+  { title: "Personeiere 🔒", url: "/eiere", icon: Users },
 ];
 
 export function AppSidebar() {

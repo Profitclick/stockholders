@@ -15,4 +15,4 @@
 - Doffin: bredere historisk innhenting og bedre navnematching (juridisk navn vs. handelsnavn)
 
 ## Blocked
-- Person-nivå lister (navngitte direkte VPS-eiere): krever innlogging/tilgangsstyring før personopplysninger kan vises — venter på brukerens beslutning
+- [x] Innlogging (kun eier) + lukket personeierliste (2024→2025, ≥5 %)
