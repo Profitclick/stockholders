@@ -10,18 +10,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Download, Loader2, X } from "lucide-react";
 import Papa from "papaparse";
-
-type Row = {
-  orgnr: string; company: string | null; shareholder_name: string; birth_year: number | null;
-  postal: string | null; pct_2022: number | null; pct_2023: number | null; pct_2024: number | null;
-  pct_2025: number | null; trend: string; years_present: number;
-};
+import { DISPLAY_YEARS } from "@/lib/annualOwnership";
+import { OWNERSHIP_YEARS } from "@/lib/ownershipHistory";
+import { personYearValue, type PersonAnnualRow as Row } from "@/lib/personAnnualOwnership";
+import { PersonAnnualPortfolio, formatPersonPct } from "@/components/PersonAnnualPortfolio";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TRENDS: Record<string, string> = {
   all: "Alle", new_2025: "Ny eier 2025", new_2024: "Ny eier 2024", new_2023: "Ny eier 2023",
   increased: "Økt ≥1 pp", decreased: "Redusert ≥1 pp", exited: "Gått ut", stable: "Stabil",
 };
-const YEARS = [2022, 2023, 2024, 2025] as const;
 
 export default function PersonOwners() {
   const { session, isAdmin, loading } = useAuth();
@@ -31,15 +29,19 @@ export default function PersonOwners() {
   const [trend, setTrend] = useState("new_2025");
   const [minPct, setMinPct] = useState("20");
   const [person, setPerson] = useState<{ name: string; birth_year: number | null } | null>(null);
+  const [view, setView] = useState("comparison");
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     if (!isAdmin) return;
+    let cancelled = false;
+    setBusy(true); setRows([]); setError("");
     const t = setTimeout(async () => {
-      setBusy(true);
       // Search / person lookups use their own indexes; trend + min-% are applied in the browser
       // for those so the database never falls back to scanning millions of rows.
       let query = supabase.from("person_ownership_history")
-        .select("orgnr,company,shareholder_name,birth_year,postal,pct_2022,pct_2023,pct_2024,pct_2025,trend,years_present,max_pct")
+        .select("orgnr,company,shareholder_name,birth_year,postal,pct_2022,pct_2023,pct_2024,pct_2025,shares_2022,shares_2023,shares_2024,shares_2025,trend,years_present,max_pct")
         .limit(1000);
       const s = q.trim();
       const m = Number(minPct);
@@ -47,6 +49,7 @@ export default function PersonOwners() {
       if (person) {
         query = query.eq("shareholder_name", person.name);
         query = person.birth_year == null ? query.is("birth_year", null) : query.eq("birth_year", person.birth_year);
+        query = query.order("orgnr");
       } else if (/^\d{9}$/.test(s)) {
         query = query.eq("orgnr", s);
         localFilter = true;
@@ -59,9 +62,11 @@ export default function PersonOwners() {
       }
       // Prefix search goes through a server function so the name/company indexes are used.
       const prefix = s.replace(/[%_\\]/g, "");
-      const { data } = s && !person && !/^\d{9}$/.test(s)
+      const { data, error: queryError } = s && !person && !/^\d{9}$/.test(s)
         ? await supabase.rpc("search_ownership_history", { p_prefix: prefix, p_limit: 2000 })
         : await query;
+      if (cancelled) return;
+      if (queryError) { setError("Kunne ikke hente eierporteføljen. Prøv igjen."); setBusy(false); return; }
       let list = ((data as (Row & { max_pct: number | null })[]) ?? []);
       if (localFilter) {
         list = list.filter((r) => (trend === "all" || r.trend === trend) && (!(m > 0) || (r.max_pct ?? 0) >= m));
@@ -70,19 +75,28 @@ export default function PersonOwners() {
       setRows(list);
       setBusy(false);
     }, 300);
-    return () => clearTimeout(t);
-  }, [isAdmin, q, trend, minPct, person]);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [isAdmin, q, trend, minPct, person, retry]);
 
   if (loading) return <p className="text-muted-foreground">Laster…</p>;
   if (!session) return <Navigate to="/auth" replace />;
   if (!isAdmin) return <p className="text-muted-foreground">Denne kontoen har ikke tilgang til personlister.</p>;
 
   function exportCsv() {
-    const blob = new Blob([Papa.unparse(rows)], { type: "text/csv" });
+    const exported = rows.map(row => ({
+      orgnr: row.orgnr, company: row.company, shareholder_name: row.shareholder_name, birth_year: row.birth_year,
+      ...Object.fromEntries(DISPLAY_YEARS.flatMap(year => [
+        [`pct_${year}`, personYearValue(row, year)],
+        [`shares_${year}`, personYearValue(row, year, "shares")],
+        [`status_${year}`, OWNERSHIP_YEARS.some(y => y === year) ? "Innlastet" : "Ikke innlastet"],
+      ])),
+    }));
+    const blob = new Blob(["\uFEFF", Papa.unparse(exported)], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = person ? `portefolje_${person.name}.csv` : `personeiere_${trend}.csv`;
     a.click();
+    URL.revokeObjectURL(a.href);
   }
 
   return (
@@ -91,10 +105,10 @@ export default function PersonOwners() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Personeiere</h1>
           <p className="text-sm text-muted-foreground">
-            Alle personlige aksjonærer i Aksjonærregisteret 2022–2025, med eierandel per år. Kun synlig for deg.
+            Eierandeler 2017–2025. Registerdata 2022–2025 er innlastet; 2017–2021 mangler. Kun eiertilgang.
           </p>
         </div>
-        <Button size="sm" variant="outline" onClick={exportCsv} disabled={!rows.length}>
+        <Button size="sm" variant="outline" onClick={exportCsv} disabled={busy || !rows.length || !!error}>
           <Download className="mr-2 h-4 w-4" /> CSV ({rows.length})
         </Button>
       </div>
@@ -113,6 +127,13 @@ export default function PersonOwners() {
           <Input className="w-32" type="number" min={0} max={100} value={minPct} onChange={(e) => setMinPct(e.target.value)} aria-label="Minste eierandel %" />
         </div>
       )}
+      {person && <>
+        <p className="text-xs text-muted-foreground">Alle beholdninger i den hentede porteføljen, uavhengig av søkefiltrene. Navn og fødselsår er ikke en entydig personidentifikator.</p>
+        <Tabs value={view} onValueChange={setView}><TabsList aria-label="Porteføljevisning"><TabsTrigger value="comparison">Sammenlign 2017–2025</TabsTrigger><TabsTrigger value="annual">Årstabeller</TabsTrigger></TabsList></Tabs>
+      </>}
+      <p className="text-xs text-muted-foreground">— betyr ingen oppgitt eierandel, ikke 0 %. Endringer i prosentpoeng er registerendringer, ikke dokumenterte kjøp eller salg.</p>
+      {error && <div role="alert" className="flex items-center gap-2 text-sm text-destructive">{error}<Button variant="outline" size="sm" onClick={() => setRetry(v => v + 1)}>Prøv igjen</Button></div>}
+      {person && view === "annual" ? busy ? <p className="text-sm text-muted-foreground">Henter portefølje…</p> : !error && <PersonAnnualPortfolio rows={rows} /> :
       <Card>
         <CardContent className="p-0 overflow-x-auto">
           <Table>
@@ -120,28 +141,27 @@ export default function PersonOwners() {
               <TableRow>
                 <TableHead>Aksjonær</TableHead><TableHead>Født</TableHead><TableHead>Sted</TableHead>
                 <TableHead>Selskap</TableHead>
-                {YEARS.map((y) => <TableHead key={y} className="text-right">{y} %</TableHead>)}
+                {DISPLAY_YEARS.map((y) => <TableHead key={y} className="text-right whitespace-nowrap">{y}{!OWNERSHIP_YEARS.some(year => year === y) && <span className="block text-[10px] font-normal">Ikke innlastet</span>}</TableHead>)}
                 <TableHead>Utvikling</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {busy ? (
-                <TableRow><TableCell colSpan={9} className="text-center"><Loader2 className="inline h-4 w-4 animate-spin" /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={14} className="text-center"><Loader2 className="inline h-4 w-4 animate-spin" /></TableCell></TableRow>
               ) : rows.length === 0 ? (
-                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground">Ingen treff.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={14} className="text-center text-muted-foreground">{error ? "Porteføljen kunne ikke hentes." : "Ingen treff."}</TableCell></TableRow>
               ) : rows.map((r, i) => (
                 <TableRow key={i}>
                   <TableCell className="font-medium">
-                    <button className="text-left hover:underline text-primary" onClick={() => setPerson({ name: r.shareholder_name, birth_year: r.birth_year })}>
+                    <Button variant="link" className="h-auto p-0 whitespace-normal text-left" onClick={() => setPerson({ name: r.shareholder_name, birth_year: r.birth_year })}>
                       {r.shareholder_name}
-                    </button>
+                    </Button>
                   </TableCell>
                   <TableCell>{r.birth_year ?? "—"}</TableCell>
                   <TableCell className="text-sm">{r.postal ?? "—"}</TableCell>
                   <TableCell className="text-sm">{r.company}<span className="block font-mono text-xs text-muted-foreground">{r.orgnr}</span></TableCell>
-                  {YEARS.map((y) => {
-                    const v = r[`pct_${y}` as keyof Row] as number | null;
-                    return <TableCell key={y} className="text-right font-mono">{v ?? "—"}</TableCell>;
+                  {DISPLAY_YEARS.map((y) => {
+                    return <TableCell key={y} className="text-right tabular-nums whitespace-nowrap">{formatPersonPct(personYearValue(r, y))}</TableCell>;
                   })}
                   <TableCell><Badge variant="secondary">{TRENDS[r.trend] ?? r.trend}</Badge></TableCell>
                 </TableRow>
@@ -149,7 +169,8 @@ export default function PersonOwners() {
             </TableBody>
           </Table>
         </CardContent>
-      </Card>
+      </Card>}
+      {!busy && !error && <p className="text-xs text-muted-foreground">{rows.length.toLocaleString("nb-NO")} poster vist.{rows.length >= (q.trim() && !person && !/^\d{9}$/.test(q.trim()) ? 2000 : 1000) ? " Treffgrensen er nådd; utvalget er ikke nødvendigvis komplett." : ""}</p>}
     </div>
   );
 }
