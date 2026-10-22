@@ -78,6 +78,13 @@
       "when": 1792652112012,
       "tag": "0010_search_ownership_history",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792677708689,
+      "tag": "0011_platform_exposure",
+      "breakpoints": true
     }
   ]
 }

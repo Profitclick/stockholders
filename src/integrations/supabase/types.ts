@@ -166,6 +166,156 @@ export type Database = {
         }
         Relationships: []
       }
+      company_platform_holdings: {
+        Row: {
+          accounts: number | null
+          orgnr: string
+          pct: number | null
+          platform_id: string
+          shares: number | null
+          year: number
+        }
+        Insert: {
+          accounts?: number | null
+          orgnr: string
+          pct?: number | null
+          platform_id: string
+          shares?: number | null
+          year: number
+        }
+        Update: {
+          accounts?: number | null
+          orgnr?: string
+          pct?: number | null
+          platform_id?: string
+          shares?: number | null
+          year?: number
+        }
+        Relationships: []
+      }
+      company_platform_profile: {
+        Row: {
+          company_name: string | null
+          direct_person_count: number | null
+          direct_person_pct: number | null
+          direct_person_shift_pp: number | null
+          dominant_platform_id: string | null
+          dominant_platform_pct: number | null
+          european_bank_pct: number | null
+          exited_direct_persons: number | null
+          foreign_institutional_pct: number | null
+          foreign_institutional_shift_pp: number | null
+          fund_pct: number | null
+          global_custody_pct: number | null
+          in_prev_year: boolean | null
+          infrastructure_pct: number | null
+          investment_bank_pct: number | null
+          is_asa: boolean | null
+          new_direct_persons: number | null
+          nominee_accounts: number | null
+          nominee_pct: number | null
+          nominee_shift_pp: number | null
+          nordic_bank_pct: number | null
+          nordic_broker_pct: number | null
+          orgnr: string
+          persons_35_54: number | null
+          persons_55_69: number | null
+          persons_70_plus: number | null
+          persons_under_35: number | null
+          platform_categories: string[] | null
+          platform_ids: string[] | null
+          prev_year: number | null
+          private_bank_pct: number | null
+          retail_pct: number | null
+          retail_shift_pp: number | null
+          total_shareholders: number | null
+          total_shares: number | null
+          updated_at: string
+          vps_registered: boolean | null
+          year: number | null
+        }
+        Insert: {
+          company_name?: string | null
+          direct_person_count?: number | null
+          direct_person_pct?: number | null
+          direct_person_shift_pp?: number | null
+          dominant_platform_id?: string | null
+          dominant_platform_pct?: number | null
+          european_bank_pct?: number | null
+          exited_direct_persons?: number | null
+          foreign_institutional_pct?: number | null
+          foreign_institutional_shift_pp?: number | null
+          fund_pct?: number | null
+          global_custody_pct?: number | null
+          in_prev_year?: boolean | null
+          infrastructure_pct?: number | null
+          investment_bank_pct?: number | null
+          is_asa?: boolean | null
+          new_direct_persons?: number | null
+          nominee_accounts?: number | null
+          nominee_pct?: number | null
+          nominee_shift_pp?: number | null
+          nordic_bank_pct?: number | null
+          nordic_broker_pct?: number | null
+          orgnr: string
+          persons_35_54?: number | null
+          persons_55_69?: number | null
+          persons_70_plus?: number | null
+          persons_under_35?: number | null
+          platform_categories?: string[] | null
+          platform_ids?: string[] | null
+          prev_year?: number | null
+          private_bank_pct?: number | null
+          retail_pct?: number | null
+          retail_shift_pp?: number | null
+          total_shareholders?: number | null
+          total_shares?: number | null
+          updated_at?: string
+          vps_registered?: boolean | null
+          year?: number | null
+        }
+        Update: {
+          company_name?: string | null
+          direct_person_count?: number | null
+          direct_person_pct?: number | null
+          direct_person_shift_pp?: number | null
+          dominant_platform_id?: string | null
+          dominant_platform_pct?: number | null
+          european_bank_pct?: number | null
+          exited_direct_persons?: number | null
+          foreign_institutional_pct?: number | null
+          foreign_institutional_shift_pp?: number | null
+          fund_pct?: number | null
+          global_custody_pct?: number | null
+          in_prev_year?: boolean | null
+          infrastructure_pct?: number | null
+          investment_bank_pct?: number | null
+          is_asa?: boolean | null
+          new_direct_persons?: number | null
+          nominee_accounts?: number | null
+          nominee_pct?: number | null
+          nominee_shift_pp?: number | null
+          nordic_bank_pct?: number | null
+          nordic_broker_pct?: number | null
+          orgnr?: string
+          persons_35_54?: number | null
+          persons_55_69?: number | null
+          persons_70_plus?: number | null
+          persons_under_35?: number | null
+          platform_categories?: string[] | null
+          platform_ids?: string[] | null
+          prev_year?: number | null
+          private_bank_pct?: number | null
+          retail_pct?: number | null
+          retail_shift_pp?: number | null
+          total_shareholders?: number | null
+          total_shares?: number | null
+          updated_at?: string
+          vps_registered?: boolean | null
+          year?: number | null
+        }
+        Relationships: []
+      }
       company_signals: {
         Row: {
           board_size: number | null
@@ -331,6 +481,42 @@ export type Database = {
           matched_orgnr?: string | null
           notice_id?: string
           publication_date?: string | null
+        }
+        Relationships: []
+      }
+      custody_platforms: {
+        Row: {
+          category: string
+          category_label: string | null
+          country: string | null
+          id: string
+          investor_profile: string | null
+          is_nominee: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          category_label?: string | null
+          country?: string | null
+          id: string
+          investor_profile?: string | null
+          is_nominee?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          category_label?: string | null
+          country?: string | null
+          id?: string
+          investor_profile?: string | null
+          is_nominee?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -540,6 +726,39 @@ export type Database = {
         }
         Relationships: []
       }
+      nominee_accounts: {
+        Row: {
+          account_name: string
+          companies: number | null
+          country: string | null
+          id: number
+          platform_id: string | null
+          positions: number | null
+          shareholder_ref: string | null
+          year: number
+        }
+        Insert: {
+          account_name: string
+          companies?: number | null
+          country?: string | null
+          id?: number
+          platform_id?: string | null
+          positions?: number | null
+          shareholder_ref?: string | null
+          year: number
+        }
+        Update: {
+          account_name?: string
+          companies?: number | null
+          country?: string | null
+          id?: number
+          platform_id?: string | null
+          positions?: number | null
+          shareholder_ref?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
       parquet_imports: {
         Row: {
           created_at: string
@@ -693,6 +912,24 @@ export type Database = {
           key?: string
           updated_at?: string
           value?: number
+        }
+        Relationships: []
+      }
+      platform_stats: {
+        Row: {
+          stats: Json
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          stats?: Json
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          stats?: Json
+          updated_at?: string
+          year?: number
         }
         Relationships: []
       }
