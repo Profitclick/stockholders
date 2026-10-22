@@ -16,3 +16,5 @@
 
 ## Blocked
 - [x] Innlogging (kun eier) + lukket personeierliste (2024→2025, ≥5 %)
+- [x] 4-års eierhistorikk 2022–2025 for alle personaksjonærer (3,76 mill. person–selskap-rader) på /eiere
+- [ ] Legge til 2017–2021 — venter på at filene lastes opp til marketrends.online/parquet/
