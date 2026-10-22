@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
+import { CompanyOwnerHistory } from "@/components/CompanyOwnerHistory";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +29,7 @@ type Holding = { year: number; orgnr: string; platform_id: string; shares: numbe
 
 export default function Platforms() {
   const { session, isAdmin, loading } = useAuth();
+  const [params] = useSearchParams();
   if (loading) return <Loader2 className="h-5 w-5 animate-spin" />;
   if (!session || !isAdmin) return <Navigate to="/auth" replace />;
   return (
@@ -38,7 +41,7 @@ export default function Platforms() {
           Viser registrert forvalter — ikke hvem som eier bak kontoen, eller hvor en enkeltperson faktisk handler.
         </p>
       </div>
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue={params.get("company") ? "company" : "overview"}>
         <TabsList>
           <TabsTrigger value="overview">Oversikt</TabsTrigger>
           <TabsTrigger value="company">Selskap</TabsTrigger>
@@ -156,10 +159,21 @@ function Overview() {
 }
 
 function CompanyView() {
+  const [params] = useSearchParams();
   const [q, setQ] = useState("");
   const [list, setList] = useState<Profile[]>([]);
   const [sel, setSel] = useState<Profile | null>(null);
   const [hold, setHold] = useState<Holding[]>([]);
+
+  useEffect(() => {
+    const orgnr = params.get("company");
+    if (!orgnr || !/^\d{9}$/.test(orgnr)) return;
+    let cancelled = false;
+    supabase.from("company_platform_profile").select("*").eq("orgnr", orgnr).maybeSingle().then(({ data }) => {
+      if (!cancelled && data) { setSel(data as Profile); setQ(orgnr); }
+    });
+    return () => { cancelled = true; };
+  }, [params]);
 
   useEffect(() => {
     const t = setTimeout(async () => {
@@ -175,7 +189,10 @@ function CompanyView() {
 
   useEffect(() => {
     if (!sel) return;
-    supabase.from("company_platform_holdings").select("*").eq("orgnr", sel.orgnr).then(({ data }) => setHold((data as Holding[]) ?? []));
+    let cancelled = false;
+    setHold([]);
+    supabase.from("company_platform_holdings").select("*").eq("orgnr", sel.orgnr).then(({ data }) => { if (!cancelled) setHold((data as Holding[]) ?? []); });
+    return () => { cancelled = true; };
   }, [sel]);
 
   const current = useMemo(() => hold.filter((h) => h.year === 2025).sort((a, b) => b.pct - a.pct), [hold]);
@@ -187,17 +204,17 @@ function CompanyView() {
   const usedCats = CATEGORY_ORDER.filter((c) => history.some((r) => r[c] > 0));
 
   return (
-    <div className="grid lg:grid-cols-[320px_1fr] gap-4">
+    <div className="grid lg:grid-cols-[280px_minmax(0,1fr)] gap-4">
       <Card>
         <CardContent className="pt-4 space-y-2">
           <Input placeholder="Selskapsnavn eller org.nr." value={q} onChange={(e) => setQ(e.target.value)} />
           <div className="text-xs text-muted-foreground">Sortert etter andel på nettmeglere</div>
           <div className="max-h-[600px] overflow-auto divide-y">
             {list.map((p) => (
-              <button key={p.orgnr} onClick={() => setSel(p)} className={`w-full text-left py-2 px-1 text-sm hover:bg-muted ${sel?.orgnr === p.orgnr ? "bg-muted" : ""}`}>
+              <Button variant="ghost" key={p.orgnr} onClick={() => setSel(p)} className={`w-full h-auto block text-left py-2 px-1 text-sm ${sel?.orgnr === p.orgnr ? "bg-muted" : ""}`}>
                 <div className="font-medium truncate">{p.company_name}</div>
                 <div className="text-xs text-muted-foreground">Nettmegler {pct(p.retail_pct)} · forvalter {pct(p.nominee_pct)}</div>
-              </button>
+              </Button>
             ))}
             {!list.length && <div className="text-sm text-muted-foreground py-4">Ingen treff</div>}
           </div>
@@ -206,7 +223,7 @@ function CompanyView() {
       {!sel ? (
         <Card><CardContent className="pt-6 text-sm text-muted-foreground">Velg et selskap for å se eierandel, eierhistorie og eierprofil.</CardContent></Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           <div>
             <h2 className="text-xl font-semibold">{sel.company_name}</h2>
             <div className="text-sm text-muted-foreground">Org.nr. {sel.orgnr} · {nf.format(sel.total_shareholders)} aksjonærer · {sel.is_asa && <Badge variant="secondary">ASA</Badge>}</div>
@@ -269,6 +286,7 @@ function CompanyView() {
               </div>
             </CardContent>
           </Card>
+          <CompanyOwnerHistory key={sel.orgnr} orgnr={sel.orgnr} />
         </div>
       )}
     </div>
