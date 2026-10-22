@@ -612,6 +612,72 @@ export type Database = {
         }
         Relationships: []
       }
+      person_ownership_history: {
+        Row: {
+          birth_year: number | null
+          company: string | null
+          first_year: number
+          id: number
+          last_year: number
+          max_pct: number | null
+          orgnr: string
+          pct_2022: number | null
+          pct_2023: number | null
+          pct_2024: number | null
+          pct_2025: number | null
+          postal: string | null
+          shareholder_name: string
+          shares_2022: number | null
+          shares_2023: number | null
+          shares_2024: number | null
+          shares_2025: number | null
+          trend: string
+          years_present: number
+        }
+        Insert: {
+          birth_year?: number | null
+          company?: string | null
+          first_year: number
+          id?: number
+          last_year: number
+          max_pct?: number | null
+          orgnr: string
+          pct_2022?: number | null
+          pct_2023?: number | null
+          pct_2024?: number | null
+          pct_2025?: number | null
+          postal?: string | null
+          shareholder_name: string
+          shares_2022?: number | null
+          shares_2023?: number | null
+          shares_2024?: number | null
+          shares_2025?: number | null
+          trend?: string
+          years_present?: number
+        }
+        Update: {
+          birth_year?: number | null
+          company?: string | null
+          first_year?: number
+          id?: number
+          last_year?: number
+          max_pct?: number | null
+          orgnr?: string
+          pct_2022?: number | null
+          pct_2023?: number | null
+          pct_2024?: number | null
+          pct_2025?: number | null
+          postal?: string | null
+          shareholder_name?: string
+          shares_2022?: number | null
+          shares_2023?: number | null
+          shares_2024?: number | null
+          shares_2025?: number | null
+          trend?: string
+          years_present?: number
+        }
+        Relationships: []
+      }
       pipeline_stats: {
         Row: {
           key: string

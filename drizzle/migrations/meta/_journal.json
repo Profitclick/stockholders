@@ -50,6 +50,13 @@
       "when": 1792648549673,
       "tag": "0006_admin_only_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792649759568,
+      "tag": "0007_person_ownership_history",
+      "breakpoints": true
     }
   ]
 }
