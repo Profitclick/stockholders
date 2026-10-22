@@ -49,8 +49,8 @@ export default function PersonOwners() {
         const s = q.trim();
         if (/^\d{9}$/.test(s)) query = query.eq("orgnr", s);
         else if (s) {
-          const clean = s.replace(/[,()%*]/g, "");
-          query = query.or(`shareholder_name.ilike.${clean}%,company.ilike.${clean}%`);
+          const clean = s.replace(/[,()%*]/g, "").toUpperCase();
+          query = query.or(`shareholder_name.like.${clean}%,company.like.${clean}%`);
         }
       }
       const { data } = await query;
