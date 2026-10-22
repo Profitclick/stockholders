@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertCircle, ArrowRight, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { EVENT_LABELS, OWNERSHIP_YEARS, ownershipEvents, type OwnershipHistory } from "@/lib/ownershipHistory";
+import { DISPLAY_YEARS } from "@/lib/annualOwnership";
 
 const PAGE_SIZE = 100;
 type Summary = { owner_count: number; entry_count: number; exit_count: number; majority_count: number; increase_count: number; decrease_count: number };
@@ -25,6 +26,10 @@ export function CompanyOwnerHistory({ orgnr }: { orgnr: string }) {
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   const [selected, setSelected] = useState<OwnershipHistory | null>(null);
+  const [year, setYear] = useState("all");
+  const availableYear = OWNERSHIP_YEARS.find(y => String(y) === year);
+  const missingYear = year !== "all" && availableYear == null;
+  const visibleYears = availableYear ? [availableYear] : OWNERSHIP_YEARS;
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +44,7 @@ export function CompanyOwnerHistory({ orgnr }: { orgnr: string }) {
   useEffect(() => {
     let cancelled = false;
     setBusy(true); setRows([]); setSelected(null); setError("");
+    if (missingYear) { setBusy(false); setTotal(0); return; }
     const timer = setTimeout(async () => {
       let query = supabase.from("company_person_history")
         .select("id,orgnr,shareholder_name,birth_year,pct_2022,pct_2023,pct_2024,pct_2025,shares_2022,shares_2023,shares_2024,shares_2025", { count: "exact" })
@@ -46,6 +52,7 @@ export function CompanyOwnerHistory({ orgnr }: { orgnr: string }) {
       const term = search.trim().replace(/[%_\\]/g, "");
       if (term) query = query.ilike("shareholder_name", `%${term}%`);
       if (event !== "all") query = query.filter("ownership_events", "cs", JSON.stringify([{ kind: event }]));
+      if (availableYear) query = query.not(`shares_${availableYear}`, "is", null);
       const { data, count, error: err } = await query;
       if (cancelled) return;
       if (err) { setError("Kunne ikke hente eierhistorikken. Prøv igjen."); setTotal(0); }
@@ -53,7 +60,7 @@ export function CompanyOwnerHistory({ orgnr }: { orgnr: string }) {
       setBusy(false);
     }, 250);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [orgnr, page, search, event, retry]);
+  }, [orgnr, page, search, event, retry, availableYear, missingYear]);
 
   const chart = useMemo(() => selected ? OWNERSHIP_YEARS.map(year => ({ year: String(year), pct: selected[`pct_${year}`] })) : [], [selected]);
   const playbooks = [
@@ -65,7 +72,7 @@ export function CompanyOwnerHistory({ orgnr }: { orgnr: string }) {
   return (
     <section className="space-y-4 border-t pt-5" aria-label="Navngitt eierhistorikk">
       <div>
-        <h3 className="text-base font-semibold">Personeiere · full registerhistorikk 2022–2025</h3>
+        <h3 className="text-base font-semibold">Personeiere · årstabeller 2017–2025</h3>
         <p className="text-xs text-muted-foreground mt-1">Alle direkte registrerte personeiere, uansett beholdning. — betyr ingen oppgitt eierandel. Navn + fødselsår er ikke en entydig personidentifikator.</p>
         <p className="text-xs text-muted-foreground">Årlige registerendringer er ikke dokumenterte kjøp/salg, kapitalutvidelser eller bevis på hvilken megler en person bruker. 2017–2021 er ikke innlastet.</p>
         <p className="text-xs text-muted-foreground">0 % kan være en avrundet liten andel i den innlastede historikken; aksjeantallet vises ved eierandelen.</p>
@@ -84,6 +91,10 @@ export function CompanyOwnerHistory({ orgnr }: { orgnr: string }) {
         </Button>)}
       </div>
       <div className="flex flex-wrap gap-2">
+        <Select value={year} onValueChange={v => { setYear(v); setPage(0); }}>
+          <SelectTrigger className="w-56" aria-label="År for personeiere"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="all">Sammenlign 2022–2025</SelectItem>{DISPLAY_YEARS.map(y => <SelectItem key={y} value={String(y)}>{y}{y < 2022 ? " · ikke innlastet" : ""}</SelectItem>)}</SelectContent>
+        </Select>
         <Input aria-label="Søk i personeiere" placeholder="Personnavn" className="max-w-xs" value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} />
         <Select value={event} onValueChange={v => { setEvent(v); setPage(0); }}>
           <SelectTrigger className="w-56" aria-label="Historisk eierskapssignal"><SelectValue /></SelectTrigger>
@@ -93,15 +104,15 @@ export function CompanyOwnerHistory({ orgnr }: { orgnr: string }) {
       {error ? <div role="alert" className="flex gap-2 items-center text-sm text-destructive"><AlertCircle className="h-4 w-4" />{error}<Button variant="outline" size="sm" onClick={() => setRetry(v => v + 1)}>Prøv igjen</Button></div> : null}
       <div className="overflow-auto max-h-[560px] border rounded-md">
         <Table>
-          <TableHeader className="sticky top-0 bg-background z-10"><TableRow><TableHead>Personnavn</TableHead><TableHead>Født</TableHead>{OWNERSHIP_YEARS.map(y => <TableHead key={y} className="text-right">{y}</TableHead>)}<TableHead>Historiske signaler</TableHead></TableRow></TableHeader>
+          <TableHeader className="sticky top-0 bg-background z-10"><TableRow><TableHead>Personnavn</TableHead><TableHead>Født</TableHead>{(missingYear ? [Number(year)] : visibleYears).map(y => <TableHead key={y} className="text-right">{y}</TableHead>)}<TableHead>Historiske signaler</TableHead></TableRow></TableHeader>
           <TableBody>
             {busy ? <TableRow><TableCell colSpan={7} className="text-center py-8"><Loader2 className="inline h-4 w-4 animate-spin" /></TableCell></TableRow> : rows.map(r => <TableRow key={r.id} className={selected?.id === r.id ? "bg-muted" : ""}>
               <TableCell><Button variant="link" className="h-auto p-0 whitespace-normal text-left" onClick={() => setSelected(r)}>{r.shareholder_name}</Button></TableCell>
               <TableCell>{r.birth_year ?? "—"}</TableCell>
-              {OWNERSHIP_YEARS.map(y => <TableCell key={y} className="text-right tabular-nums whitespace-nowrap">{formatPct(r[`pct_${y}`])}{r[`shares_${y}`] != null && <span className="block text-[10px] text-muted-foreground">{r[`shares_${y}`]?.toLocaleString("nb-NO")} aksjer</span>}</TableCell>)}
+              {visibleYears.map(y => <TableCell key={y} className="text-right tabular-nums whitespace-nowrap">{formatPct(r[`pct_${y}`])}{r[`shares_${y}`] != null && <span className="block text-[10px] text-muted-foreground">{r[`shares_${y}`]?.toLocaleString("nb-NO")} aksjer</span>}</TableCell>)}
               <TableCell><div className="flex flex-wrap gap-1">{ownershipEvents(r).map(e => <Badge key={`${e.from}-${e.kind}`} variant="outline" className="text-xs whitespace-nowrap">{e.from}→{e.to}: {EVENT_LABELS[e.kind]}{e.delta == null ? "" : ` (${e.delta > 0 ? "+" : ""}${e.delta.toLocaleString("nb-NO", { maximumFractionDigits: 2 })} pp)`}</Badge>)}</div></TableCell>
             </TableRow>)}
-            {!busy && !error && !rows.length && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Ingen personeiere med disse kriteriene.</TableCell></TableRow>}
+            {!busy && !error && !rows.length && <TableRow><TableCell colSpan={visibleYears.length + 3} className="text-center text-muted-foreground">{missingYear ? `Aksjonærregisteret for ${year} er ikke innlastet. Eierandel kan ikke beregnes.` : "Ingen personeiere med disse kriteriene."}</TableCell></TableRow>}
           </TableBody>
         </Table>
       </div>
