@@ -45,7 +45,7 @@ export function CompanyOwnerHistory({ orgnr }: { orgnr: string }) {
         .eq("orgnr", orgnr).order("id").range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
       const term = search.trim().replace(/[%_\\]/g, "");
       if (term) query = query.ilike("shareholder_name", `%${term}%`);
-      if (event !== "all") query = query.contains("ownership_events", [{ kind: event }]);
+      if (event !== "all") query = query.filter("ownership_events", "cs", JSON.stringify([{ kind: event }]));
       const { data, count, error: err } = await query;
       if (cancelled) return;
       if (err) { setError("Kunne ikke hente eierhistorikken. Prøv igjen."); setTotal(0); }
