@@ -1,8 +1,8 @@
 # Roadmap
 
 ## In progress — Plattformer & VPS (hvilke aksjonærer handler via hvilke plattformer)
-- [ ] Navngitte personeiere og full tilgjengelig eierandelshistorikk i VPS-eierprofilen
-- [ ] Historiske eierskapssignaler 2022–2025 koblet til playbooks og eksport
+- [x] Navngitte personeiere og full tilgjengelig eierandelshistorikk i VPS-eierprofilen (alle beholdninger, paginering, søk)
+- [x] Historiske eierskapssignaler 2022–2025 koblet til playbooks og eksport (23 tester grønne; eierprofil → playbook → CSV, filtre og innloggingsvern verifisert)
 - [x] Plattformkatalog + klassifisering av forvalterkontoer (nominee) med tester (17 tester grønne)
 - [x] Innlastingsskript for 2024 + 2025 skrevet (ikke kjørt ennå)
 - [x] Databasetabeller + innlasting 2022–2025 (738 selskaper, 44 193 plattformposisjoner)
