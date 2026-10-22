@@ -38,7 +38,7 @@ export default function PersonOwners() {
       setBusy(true);
       let query = supabase.from("person_ownership_history")
         .select("orgnr,company,shareholder_name,birth_year,postal,pct_2022,pct_2023,pct_2024,pct_2025,trend,years_present")
-        .order("max_pct", { ascending: false, nullsFirst: false }).limit(1000);
+        .order("max_pct", { ascending: false }).limit(1000);
       if (person) {
         query = query.eq("shareholder_name", person.name);
         query = person.birth_year == null ? query.is("birth_year", null) : query.eq("birth_year", person.birth_year);
