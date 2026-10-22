@@ -43,6 +43,13 @@
       "when": 1792589716307,
       "tag": "0005_ownership_ai_context_word_match",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792648549673,
+      "tag": "0006_admin_only_rls",
+      "breakpoints": true
     }
   ]
 }
