@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { CompanyOwnerHistory } from "@/components/CompanyOwnerHistory";
+import { AnnualPlatformOwnership } from "@/components/AnnualPlatformOwnership";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -164,6 +165,10 @@ function CompanyView() {
   const [list, setList] = useState<Profile[]>([]);
   const [sel, setSel] = useState<Profile | null>(null);
   const [hold, setHold] = useState<Holding[]>([]);
+  const [loadedYears, setLoadedYears] = useState<number[]>([]);
+  const [holdBusy, setHoldBusy] = useState(false);
+  const [holdError, setHoldError] = useState("");
+  const [holdRetry, setHoldRetry] = useState(0);
 
   useEffect(() => {
     const orgnr = params.get("company");
@@ -191,11 +196,24 @@ function CompanyView() {
     if (!sel) return;
     let cancelled = false;
     setHold([]);
-    supabase.from("company_platform_holdings").select("*").eq("orgnr", sel.orgnr).then(({ data }) => { if (!cancelled) setHold((data as Holding[]) ?? []); });
+    setLoadedYears([]); setHoldBusy(true); setHoldError("");
+    Promise.all([
+      supabase.from("company_platform_holdings").select("*").eq("orgnr", sel.orgnr).order("year").order("platform_id"),
+      supabase.from("platform_stats").select("stats").eq("year", 2025).maybeSingle(),
+    ]).then(([holdings, stats]) => {
+      if (cancelled) return;
+      if (holdings.error || stats.error) setHoldError("Kunne ikke hente årstabellene. Prøv igjen.");
+      else {
+        setHold((holdings.data as Holding[]) ?? []);
+        const metadata = stats.data?.stats;
+        const years = metadata && typeof metadata === "object" && !Array.isArray(metadata) ? metadata.history_years : null;
+        setLoadedYears(Array.isArray(years) ? years.filter((y): y is number => typeof y === "number") : [...new Set((holdings.data ?? []).map(h => h.year))]);
+      }
+      setHoldBusy(false);
+    });
     return () => { cancelled = true; };
-  }, [sel]);
+  }, [sel, holdRetry]);
 
-  const current = useMemo(() => hold.filter((h) => h.year === 2025).sort((a, b) => b.pct - a.pct), [hold]);
   const history = useMemo(() => YEARS.map((y) => {
     const row: any = { year: String(y) };
     for (const c of CATEGORY_ORDER) row[c] = +hold.filter((h) => h.year === y && PLATFORM_BY_ID[h.platform_id]?.category === c).reduce((s, h) => s + Number(h.pct), 0).toFixed(2);
@@ -234,25 +252,8 @@ function CompanyView() {
             <Stat label="Utenlandske institusjoner" value={pct(sel.foreign_institutional_pct)} sub={`${pp(sel.foreign_institutional_shift_pp)} fra 2024`} />
             <Stat label="Personer i eget navn" value={pct(sel.direct_person_pct)} sub={`${nf.format(sel.direct_person_count)} personer · ${pp(sel.direct_person_shift_pp)}`} />
           </div>
-          <Card>
-            <CardHeader><CardTitle className="text-base">Eierandel per plattform 2025</CardTitle></CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader><TableRow><TableHead>Plattform</TableHead><TableHead>Type</TableHead><TableHead className="text-right">Eierandel</TableHead><TableHead className="text-right">Kontoer</TableHead></TableRow></TableHeader>
-                <TableBody>
-                  {current.map((h) => (
-                    <TableRow key={h.platform_id}>
-                      <TableCell>{platName(h.platform_id)}</TableCell>
-                      <TableCell className="text-xs">{PLATFORM_CATEGORIES[PLATFORM_BY_ID[h.platform_id]?.category as PlatformCategory]?.short}</TableCell>
-                      <TableCell className="text-right">{pct(h.pct, 2)}</TableCell>
-                      <TableCell className="text-right">{h.accounts}</TableCell>
-                    </TableRow>
-                  ))}
-                  {!current.length && <TableRow><TableCell colSpan={4} className="text-muted-foreground">Ingen plattformbeholdning i 2025</TableCell></TableRow>}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <AnnualPlatformOwnership rows={hold} loadedYears={loadedYears} busy={holdBusy} error={holdError} />
+          {holdError && <Button size="sm" variant="outline" onClick={() => setHoldRetry(v => v + 1)}>Prøv igjen</Button>}
           <Card>
             <CardHeader><CardTitle className="text-base">Eierhistorie 2022–2025 (andel per plattformtype)</CardTitle></CardHeader>
             <CardContent className="h-72">

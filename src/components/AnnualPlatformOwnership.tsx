@@ -6,8 +6,8 @@ import { PLATFORM_BY_ID, PLATFORM_CATEGORIES } from "@/lib/custodyPlatforms";
 const pct = (v: number | null | undefined) => v == null ? "—" : `${Number(v).toLocaleString("nb-NO", { maximumFractionDigits: 4 })} %`;
 const name = (id: string) => PLATFORM_BY_ID[id]?.name ?? id;
 
-export function AnnualPlatformOwnership({ rows, loadedYears, busy, error, onRetry }: {
-  rows: AnnualHolding[]; loadedYears: number[]; busy: boolean; error: string; onRetry: () => void;
+export function AnnualPlatformOwnership({ rows, loadedYears, busy, error }: {
+  rows: AnnualHolding[]; loadedYears: number[]; busy: boolean; error: string;
 }) {
   const platforms = [...new Set(rows.map(r => r.platform_id))].sort((a, b) => name(a).localeCompare(name(b), "nb"));
   return <section className="space-y-5" aria-label="Årlige plattformeierandeler">
