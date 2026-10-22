@@ -14,7 +14,7 @@ export function AnnualPlatformOwnership({ rows, loadedYears, busy, error }: {
     <div><h3 className="text-base font-semibold">Eierandel per år · 2017–2025</h3>
       <p className="text-xs text-muted-foreground">— betyr ingen oppgitt plattformandel, ikke 0 %. Endring vises bare når begge årsandeler finnes.</p></div>
     {busy ? <p className="text-sm text-muted-foreground">Henter årstabeller…</p> : error ? <p role="alert" className="text-sm text-destructive">{error}</p> : <>
-      <div className="overflow-auto border rounded-md">
+      <div className="overflow-auto max-h-[440px] border rounded-md">
         <Table aria-label="Sammenligning av plattformandeler 2017–2025">
           <TableHeader><TableRow><TableHead>Plattform</TableHead>{DISPLAY_YEARS.map(year => <TableHead key={year} className="text-right whitespace-nowrap">{year}{!loadedYears.includes(year) && <span className="block text-[10px] font-normal">Ikke innlastet</span>}</TableHead>)}</TableRow></TableHeader>
           <TableBody>{platforms.map(id => <TableRow key={id}><TableCell className="font-medium whitespace-nowrap">{name(id)}</TableCell>{DISPLAY_YEARS.map(year => <TableCell key={year} className="text-right tabular-nums whitespace-nowrap">{pct(rows.find(r => r.platform_id === id && r.year === year)?.pct)}</TableCell>)}</TableRow>)}{!platforms.length && <TableRow><TableCell colSpan={10} className="text-muted-foreground">Ingen registrerte plattformandeler for dette selskapet.</TableCell></TableRow>}</TableBody>
@@ -25,7 +25,7 @@ export function AnnualPlatformOwnership({ rows, loadedYears, busy, error }: {
         const annual = rows.filter(r => r.year === year).sort((a, b) => Number(b.pct ?? 0) - Number(a.pct ?? 0));
         return <section key={year} className="space-y-2 border-t pt-4" aria-label={`Plattformandeler ${year}`}>
           <div className="flex items-center gap-2"><h4 className="text-sm font-semibold">{year}</h4><Badge variant="outline">{loaded ? `${annual.length} plattformer` : "Ikke innlastet"}</Badge></div>
-          <div className="overflow-auto"><Table aria-label={`Eierandel per plattform ${year}`}>
+          <div className="overflow-auto max-h-[440px]"><Table aria-label={`Eierandel per plattform ${year}`}>
             <TableHeader><TableRow><TableHead>Plattform</TableHead><TableHead>Type</TableHead><TableHead className="text-right">Eierandel</TableHead><TableHead className="text-right">Aksjer</TableHead><TableHead className="text-right">Kontoer</TableHead><TableHead className="text-right whitespace-nowrap">Endring fra {year - 1}</TableHead></TableRow></TableHeader>
             <TableBody>{annual.map(r => {
               const platform = PLATFORM_BY_ID[r.platform_id];

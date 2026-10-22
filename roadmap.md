@@ -1,7 +1,7 @@
 # Roadmap
 
 ## In progress — Plattformer & VPS (hvilke aksjonærer handler via hvilke plattformer)
-- [ ] Årstabeller og sammenligning 2017–2025, med tydelig markering av ikke innlastede år
+- [x] Årstabeller og sammenligning 2017–2025, med tydelig markering av ikke innlastede år (27 tester grønne; ni tabeller, personeiere per år og mobilvisning verifisert)
 - [x] Navngitte personeiere og full tilgjengelig eierandelshistorikk i VPS-eierprofilen (alle beholdninger, paginering, søk)
 - [x] Historiske eierskapssignaler 2022–2025 koblet til playbooks og eksport (23 tester grønne; eierprofil → playbook → CSV, filtre og innloggingsvern verifisert)
 - [x] Plattformkatalog + klassifisering av forvalterkontoer (nominee) med tester (17 tester grønne)
