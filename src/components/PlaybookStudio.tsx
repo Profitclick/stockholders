@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +38,12 @@ type SignalRow = {
   contract_count: number;
   contract_value: number;
   lead_score: number;
+  owner_count?: number;
+  entry_count?: number;
+  exit_count?: number;
+  majority_count?: number;
+  increase_count?: number;
+  decrease_count?: number;
 };
 
 const SELECT_COLS =
@@ -46,10 +53,26 @@ interface Playbook {
   id: string;
   title: string;
   pitch: string;
+  historical?: boolean;
   apply: (q: any) => any;
 }
 
 const PLAYBOOKS: Playbook[] = [
+  {
+    id: "historisk-majoritet", title: "Historisk majoritetsskifte", historical: true,
+    pitch: "Personandel krysset 50 % i minst ett av årsintervallene 2022–2025.",
+    apply: (q) => q.gt("majority_count", 0),
+  },
+  {
+    id: "historisk-oppbygging", title: "Eieroppbygging", historical: true,
+    pitch: "Direkte registrerte personeiere har økt andelen med minst 20 prosentpoeng mellom to registerår.",
+    apply: (q) => q.gt("increase_count", 0),
+  },
+  {
+    id: "historisk-inngang", title: "Nye registrerte eiere", historical: true,
+    pitch: "Personposter som kommer inn i registeret i 2023, 2024 eller 2025, uansett beholdning.",
+    apply: (q) => q.gt("entry_count", 0),
+  },
   {
     id: "eierskifte",
     title: "Eierskifte & exit",
@@ -93,15 +116,18 @@ const nf = new Intl.NumberFormat("nb-NO");
 const money = (v: number | null) => (v == null ? "—" : nf.format(Math.round(v)));
 
 export function PlaybookStudio() {
+  const [params, setParams] = useSearchParams();
+  const companyScope = params.get("company");
+  const validCompany = companyScope && /^\d{9}$/.test(companyScope) ? companyScope : null;
   const [counts, setCounts] = useState<Record<string, number>>({});
-  const [active, setActive] = useState<string>("eierskifte");
+  const [active, setActive] = useState<string>(() => PLAYBOOKS.some(p => p.id === params.get("playbook")) ? String(params.get("playbook")) : "eierskifte");
   const [rows, setRows] = useState<SignalRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [ingesting, setIngesting] = useState(false);
 
-  const [minScore, setMinScore] = useState("40");
+  const [minScore, setMinScore] = useState(validCompany ? "0" : "40");
   const [minRevenue, setMinRevenue] = useState("");
   const [municipality, setMunicipality] = useState("");
   const [needSkattefunn, setNeedSkattefunn] = useState(false);
@@ -111,13 +137,22 @@ export function PlaybookStudio() {
 
   const playbook = useMemo(() => PLAYBOOKS.find((p) => p.id === active) ?? PLAYBOOKS[0], [active]);
 
+  useEffect(() => {
+    const id = params.get("playbook");
+    if (id && PLAYBOOKS.some(p => p.id === id)) setActive(id);
+    if (validCompany) setMinScore("0");
+  }, [params, validCompany]);
+
   const buildQuery = useCallback(
     (pb: Playbook, head: boolean) => {
-      let q = supabase.from("company_signals").select(head ? "orgnr" : SELECT_COLS, {
+      const source = pb.historical ? "historical_playbook_candidates" : "company_signals";
+      const cols = pb.historical ? `${SELECT_COLS},owner_count,entry_count,exit_count,majority_count,increase_count,decrease_count` : SELECT_COLS;
+      let q = supabase.from(source).select(head ? "orgnr" : cols, {
         count: "exact",
         head,
       });
       q = pb.apply(q);
+      if (validCompany) q = q.eq("orgnr", validCompany);
       if (!head) {
         const score = Number(minScore);
         if (!Number.isNaN(score) && score > 0) q = q.gte("lead_score", score);
@@ -131,7 +166,7 @@ export function PlaybookStudio() {
       }
       return q;
     },
-    [minScore, minRevenue, municipality, needSkattefunn, needContract, needContact, limit],
+    [minScore, minRevenue, municipality, needSkattefunn, needContract, needContact, limit, validCompany],
   );
 
   useEffect(() => {
@@ -150,16 +185,18 @@ export function PlaybookStudio() {
     };
     // counts are preset-only; filters do not apply to the cards
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [validCompany, refreshing]);
 
   const runPlaybook = useCallback(async () => {
     setLoading(true);
+    setRows([]);
     try {
       const { data, error, count } = await buildQuery(playbook, false);
       if (error) throw error;
       setRows((data as unknown as SignalRow[]) ?? []);
       setTotal(count ?? 0);
     } catch (err: any) {
+      setTotal(0);
       toast.error(`Kunne ikke hente kandidater: ${err.message}`);
     } finally {
       setLoading(false);
@@ -169,13 +206,15 @@ export function PlaybookStudio() {
   useEffect(() => {
     runPlaybook();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
+  }, [active, validCompany]);
 
   async function refreshSignals() {
     setRefreshing(true);
     try {
       const { error } = await supabase.rpc("refresh_company_signals");
       if (error) throw error;
+      const { error: historyError } = await supabase.rpc("refresh_historical_ownership_signals");
+      if (historyError) throw historyError;
       toast.success("Signaler oppdatert");
       await runPlaybook();
     } catch (err: any) {
@@ -232,6 +271,15 @@ export function PlaybookStudio() {
       "Offentlige kontrakter": r.contract_count,
       "Kontraktsverdi": r.contract_value,
       Leadscore: r.lead_score,
+      ...(playbook.historical ? {
+        "Historikkperiode": "2022–2025",
+        "Personeierposter": r.owner_count ?? 0,
+        "Registerinnganger": r.entry_count ?? 0,
+        "Registerutganger": r.exit_count ?? 0,
+        "Historiske majoritetsendringer": r.majority_count ?? 0,
+        "Økninger ≥20 pp": r.increase_count ?? 0,
+        "Reduksjoner ≥20 pp": r.decrease_count ?? 0,
+      } : {}),
     }));
 
     const stamp = new Date().toISOString().slice(0, 10);
@@ -275,6 +323,13 @@ export function PlaybookStudio() {
           </Button>
         </div>
       </div>
+
+      {validCompany && <div className="flex flex-wrap gap-2 items-center text-sm">
+        <Badge variant="secondary">Selskap {validCompany}</Badge>
+        <Button size="sm" variant="outline" onClick={() => { const next = new URLSearchParams(params); next.delete("company"); setParams(next); }}>Vis alle selskaper</Button>
+        <Button size="sm" variant="link" asChild><Link to={`/plattformer?company=${validCompany}`}>Tilbake til eierprofil</Link></Button>
+      </div>}
+      {playbook.historical && <p className="text-xs text-muted-foreground">2022–2025 · direkte registrerte personeiere · selskaper med beriket selskapsprofil. Inngang/utgang er registerobservasjoner, ikke dokumenterte handler. Eksisterende leadscore beholdes; signalene gir ikke automatisk kontaktgrunnlag.</p>}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {PLAYBOOKS.map((pb) => (
@@ -403,6 +458,11 @@ export function PlaybookStudio() {
                         {r.has_majority_change && <Badge variant="default" className="text-[10px]">Eierskifte</Badge>}
                         {r.has_capital_increase && <Badge variant="secondary" className="text-[10px]">Kapital</Badge>}
                         {r.has_new_shareholder && <Badge variant="secondary" className="text-[10px]">Ny eier</Badge>}
+                        {(r.majority_count ?? 0) > 0 && <Badge variant="outline">Historisk majoritet ×{r.majority_count}</Badge>}
+                        {(r.entry_count ?? 0) > 0 && <Badge variant="outline">Innganger ×{r.entry_count}</Badge>}
+                        {(r.exit_count ?? 0) > 0 && <Badge variant="outline">Utganger ×{r.exit_count}</Badge>}
+                        {(r.increase_count ?? 0) > 0 && <Badge variant="outline">Økt ≥20 pp ×{r.increase_count}</Badge>}
+                        {(r.decrease_count ?? 0) > 0 && <Badge variant="outline">Redusert ≥20 pp ×{r.decrease_count}</Badge>}
                         {r.skattefunn_count > 0 && <Badge variant="outline" className="text-[10px]">SkatteFUNN</Badge>}
                         {r.grants_count > 0 && <Badge variant="outline" className="text-[10px]">Tilskudd</Badge>}
                         {r.eu_grants_count > 0 && <Badge variant="outline" className="text-[10px]">EU</Badge>}
