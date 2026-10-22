@@ -12,7 +12,7 @@ import { EVENT_LABELS, OWNERSHIP_YEARS, ownershipEvents, type OwnershipHistory }
 
 const PAGE_SIZE = 100;
 type Summary = { owner_count: number; entry_count: number; exit_count: number; majority_count: number; increase_count: number; decrease_count: number };
-const formatPct = (n: number | null) => n == null ? "—" : `${Number(n).toLocaleString("nb-NO", { maximumFractionDigits: 4 })} %`;
+const formatPct = (n: number | null) => n == null ? "—" : `${Number(n).toLocaleString("nb-NO", { maximumFractionDigits: 6 })} %`;
 
 export function CompanyOwnerHistory({ orgnr }: { orgnr: string }) {
   const [rows, setRows] = useState<OwnershipHistory[]>([]);
@@ -68,6 +68,7 @@ export function CompanyOwnerHistory({ orgnr }: { orgnr: string }) {
         <h3 className="text-base font-semibold">Personeiere · full registerhistorikk 2022–2025</h3>
         <p className="text-xs text-muted-foreground mt-1">Alle direkte registrerte personeiere, uansett beholdning. — betyr ingen oppgitt eierandel. Navn + fødselsår er ikke en entydig personidentifikator.</p>
         <p className="text-xs text-muted-foreground">Årlige registerendringer er ikke dokumenterte kjøp/salg, kapitalutvidelser eller bevis på hvilken megler en person bruker. 2017–2021 er ikke innlastet.</p>
+        <p className="text-xs text-muted-foreground">0 % kan være en avrundet liten andel i den innlastede historikken; aksjeantallet vises ved eierandelen.</p>
       </div>
       {summary && <div className="flex flex-wrap gap-2 text-xs">
         <Badge variant="secondary">{summary.owner_count.toLocaleString("nb-NO")} personeierposter</Badge>
@@ -90,14 +91,14 @@ export function CompanyOwnerHistory({ orgnr }: { orgnr: string }) {
         </Select>
       </div>
       {error ? <div role="alert" className="flex gap-2 items-center text-sm text-destructive"><AlertCircle className="h-4 w-4" />{error}<Button variant="outline" size="sm" onClick={() => setRetry(v => v + 1)}>Prøv igjen</Button></div> : null}
-      <div className="overflow-x-auto">
+      <div className="overflow-auto max-h-[560px] border rounded-md">
         <Table>
-          <TableHeader><TableRow><TableHead>Personnavn</TableHead><TableHead>Født</TableHead>{OWNERSHIP_YEARS.map(y => <TableHead key={y} className="text-right">{y}</TableHead>)}<TableHead>Historiske signaler</TableHead></TableRow></TableHeader>
+          <TableHeader className="sticky top-0 bg-background z-10"><TableRow><TableHead>Personnavn</TableHead><TableHead>Født</TableHead>{OWNERSHIP_YEARS.map(y => <TableHead key={y} className="text-right">{y}</TableHead>)}<TableHead>Historiske signaler</TableHead></TableRow></TableHeader>
           <TableBody>
             {busy ? <TableRow><TableCell colSpan={7} className="text-center py-8"><Loader2 className="inline h-4 w-4 animate-spin" /></TableCell></TableRow> : rows.map(r => <TableRow key={r.id} className={selected?.id === r.id ? "bg-muted" : ""}>
               <TableCell><Button variant="link" className="h-auto p-0 whitespace-normal text-left" onClick={() => setSelected(r)}>{r.shareholder_name}</Button></TableCell>
               <TableCell>{r.birth_year ?? "—"}</TableCell>
-              {OWNERSHIP_YEARS.map(y => <TableCell key={y} className="text-right tabular-nums whitespace-nowrap" title={r[`shares_${y}`] == null ? "Ikke registrert dette året" : `${r[`shares_${y}`]?.toLocaleString("nb-NO")} aksjer`}>{formatPct(r[`pct_${y}`])}</TableCell>)}
+              {OWNERSHIP_YEARS.map(y => <TableCell key={y} className="text-right tabular-nums whitespace-nowrap">{formatPct(r[`pct_${y}`])}{r[`shares_${y}`] != null && <span className="block text-[10px] text-muted-foreground">{r[`shares_${y}`]?.toLocaleString("nb-NO")} aksjer</span>}</TableCell>)}
               <TableCell><div className="flex flex-wrap gap-1">{ownershipEvents(r).map(e => <Badge key={`${e.from}-${e.kind}`} variant="outline" className="text-xs whitespace-nowrap">{e.from}→{e.to}: {EVENT_LABELS[e.kind]}{e.delta == null ? "" : ` (${e.delta > 0 ? "+" : ""}${e.delta.toLocaleString("nb-NO", { maximumFractionDigits: 2 })} pp)`}</Badge>)}</div></TableCell>
             </TableRow>)}
             {!busy && !error && !rows.length && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Ingen personeiere med disse kriteriene.</TableCell></TableRow>}

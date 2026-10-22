@@ -145,13 +145,11 @@ export function PlaybookStudio() {
 
   const buildQuery = useCallback(
     (pb: Playbook, head: boolean) => {
-      const source = pb.historical ? "historical_playbook_candidates" : "company_signals";
       const cols = pb.historical ? `${SELECT_COLS},owner_count,entry_count,exit_count,majority_count,increase_count,decrease_count` : SELECT_COLS;
-      let q = supabase.from(source).select(head ? "orgnr" : cols, {
-        count: "exact",
-        head,
-      });
-      q = pb.apply(q);
+      const base = pb.historical
+        ? supabase.from("historical_playbook_candidates").select(head ? "orgnr" : cols, { count: "exact", head })
+        : supabase.from("company_signals").select(head ? "orgnr" : cols, { count: "exact", head });
+      let q = pb.apply(base);
       if (validCompany) q = q.eq("orgnr", validCompany);
       if (!head) {
         const score = Number(minScore);
