@@ -36,25 +36,36 @@ export default function PersonOwners() {
     if (!isAdmin) return;
     const t = setTimeout(async () => {
       setBusy(true);
+      // Search / person lookups use their own indexes; trend + min-% are applied in the browser
+      // for those so the database never falls back to scanning millions of rows.
       let query = supabase.from("person_ownership_history")
-        .select("orgnr,company,shareholder_name,birth_year,postal,pct_2022,pct_2023,pct_2024,pct_2025,trend,years_present")
-        .order("max_pct", { ascending: false }).limit(1000);
+        .select("orgnr,company,shareholder_name,birth_year,postal,pct_2022,pct_2023,pct_2024,pct_2025,trend,years_present,max_pct")
+        .limit(1000);
+      const s = q.trim();
+      const m = Number(minPct);
+      let localFilter = false;
       if (person) {
         query = query.eq("shareholder_name", person.name);
         query = person.birth_year == null ? query.is("birth_year", null) : query.eq("birth_year", person.birth_year);
+      } else if (/^\d{9}$/.test(s)) {
+        query = query.eq("orgnr", s);
+        localFilter = true;
+      } else if (s) {
+        const clean = s.replace(/[,()%*]/g, "").toUpperCase();
+        query = query.or(`shareholder_name.like.${clean}%,company.like.${clean}%`);
+        localFilter = true;
       } else {
         if (trend !== "all") query = query.eq("trend", trend);
-        const m = Number(minPct);
         if (m > 0) query = query.gte("max_pct", m);
-        const s = q.trim();
-        if (/^\d{9}$/.test(s)) query = query.eq("orgnr", s);
-        else if (s) {
-          const clean = s.replace(/[,()%*]/g, "").toUpperCase();
-          query = query.or(`shareholder_name.like.${clean}%,company.like.${clean}%`);
-        }
+        query = query.order("max_pct", { ascending: false });
       }
       const { data } = await query;
-      setRows((data as Row[]) ?? []);
+      let list = ((data as (Row & { max_pct: number | null })[]) ?? []);
+      if (localFilter) {
+        list = list.filter((r) => (trend === "all" || r.trend === trend) && (!(m > 0) || (r.max_pct ?? 0) >= m));
+      }
+      list.sort((a, b) => (b.max_pct ?? 0) - (a.max_pct ?? 0));
+      setRows(list);
       setBusy(false);
     }, 300);
     return () => clearTimeout(t);
