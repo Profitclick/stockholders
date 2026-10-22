@@ -50,6 +50,34 @@
       "when": 1792648549673,
       "tag": "0006_admin_only_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792649759568,
+      "tag": "0007_person_ownership_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792651729996,
+      "tag": "0008_person_ownership_history_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792651896789,
+      "tag": "0009_poh_fast_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792652112012,
+      "tag": "0010_search_ownership_history",
+      "breakpoints": true
     }
   ]
 }

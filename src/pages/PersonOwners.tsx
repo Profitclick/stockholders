@@ -8,46 +8,70 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, X } from "lucide-react";
 import Papa from "papaparse";
 
 type Row = {
   orgnr: string; company: string | null; shareholder_name: string; birth_year: number | null;
-  postal: string | null; pct_2025: number | null; pct_2024: number | null; change_type: string;
+  postal: string | null; pct_2022: number | null; pct_2023: number | null; pct_2024: number | null;
+  pct_2025: number | null; trend: string; years_present: number;
 };
 
-const CHANGES: Record<string, string> = {
-  all: "Alle endringer", new: "Ny eier (2025)", increased: "Økt ≥5 pp", decreased: "Redusert ≥5 pp",
-  exited: "Gått ut", unchanged: "Uendret",
+const TRENDS: Record<string, string> = {
+  all: "Alle", new_2025: "Ny eier 2025", new_2024: "Ny eier 2024", new_2023: "Ny eier 2023",
+  increased: "Økt ≥1 pp", decreased: "Redusert ≥1 pp", exited: "Gått ut", stable: "Stabil",
 };
+const YEARS = [2022, 2023, 2024, 2025] as const;
 
 export default function PersonOwners() {
   const { session, isAdmin, loading } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
-  const [change, setChange] = useState("new");
+  const [trend, setTrend] = useState("new_2025");
   const [minPct, setMinPct] = useState("20");
+  const [person, setPerson] = useState<{ name: string; birth_year: number | null } | null>(null);
 
   useEffect(() => {
     if (!isAdmin) return;
     const t = setTimeout(async () => {
       setBusy(true);
-      let query = supabase.from("person_holdings")
-        .select("orgnr,company,shareholder_name,birth_year,postal,pct_2025,pct_2024,change_type")
-        .order("pct_2025", { ascending: false, nullsFirst: false }).limit(1000);
-      if (change !== "all") query = query.eq("change_type", change);
-      const m = Number(minPct);
-      if (m > 0) query = change === "exited" ? query.gte("pct_2024", m) : query.gte("pct_2025", m);
+      // Search / person lookups use their own indexes; trend + min-% are applied in the browser
+      // for those so the database never falls back to scanning millions of rows.
+      let query = supabase.from("person_ownership_history")
+        .select("orgnr,company,shareholder_name,birth_year,postal,pct_2022,pct_2023,pct_2024,pct_2025,trend,years_present,max_pct")
+        .limit(1000);
       const s = q.trim();
-      if (/^\d{9}$/.test(s)) query = query.eq("orgnr", s);
-      else if (s) query = query.or(`shareholder_name.ilike.%${s.replace(/[,()]/g, "")}%,company.ilike.%${s.replace(/[,()]/g, "")}%`);
-      const { data } = await query;
-      setRows((data as Row[]) ?? []);
+      const m = Number(minPct);
+      let localFilter = false;
+      if (person) {
+        query = query.eq("shareholder_name", person.name);
+        query = person.birth_year == null ? query.is("birth_year", null) : query.eq("birth_year", person.birth_year);
+      } else if (/^\d{9}$/.test(s)) {
+        query = query.eq("orgnr", s);
+        localFilter = true;
+      } else if (s) {
+        localFilter = true;
+      } else {
+        if (trend !== "all") query = query.eq("trend", trend);
+        if (m > 0) query = query.gte("max_pct", m);
+        query = query.order("max_pct", { ascending: false });
+      }
+      // Prefix search goes through a server function so the name/company indexes are used.
+      const prefix = s.replace(/[%_\\]/g, "");
+      const { data } = s && !person && !/^\d{9}$/.test(s)
+        ? await supabase.rpc("search_ownership_history", { p_prefix: prefix, p_limit: 2000 })
+        : await query;
+      let list = ((data as (Row & { max_pct: number | null })[]) ?? []);
+      if (localFilter) {
+        list = list.filter((r) => (trend === "all" || r.trend === trend) && (!(m > 0) || (r.max_pct ?? 0) >= m));
+      }
+      list.sort((a, b) => (b.max_pct ?? 0) - (a.max_pct ?? 0));
+      setRows(list);
       setBusy(false);
     }, 300);
     return () => clearTimeout(t);
-  }, [isAdmin, q, change, minPct]);
+  }, [isAdmin, q, trend, minPct, person]);
 
   if (loading) return <p className="text-muted-foreground">Laster…</p>;
   if (!session) return <Navigate to="/auth" replace />;
@@ -57,7 +81,7 @@ export default function PersonOwners() {
     const blob = new Blob([Papa.unparse(rows)], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `personeiere_${change}.csv`;
+    a.download = person ? `portefolje_${person.name}.csv` : `personeiere_${trend}.csv`;
     a.click();
   }
 
@@ -67,45 +91,59 @@ export default function PersonOwners() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Personeiere</h1>
           <p className="text-sm text-muted-foreground">
-            Personer med direkte eierandel ≥5 % i fulgte selskaper, 2024 → 2025. Kun synlig for deg.
+            Alle personlige aksjonærer i Aksjonærregisteret 2022–2025, med eierandel per år. Kun synlig for deg.
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={exportCsv} disabled={!rows.length}>
           <Download className="mr-2 h-4 w-4" /> CSV ({rows.length})
         </Button>
       </div>
-      <div className="flex gap-2 flex-wrap">
-        <Input className="max-w-xs" placeholder="Navn, selskap eller org.nr" value={q} onChange={(e) => setQ(e.target.value)} />
-        <Select value={change} onValueChange={setChange}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-          <SelectContent>{Object.entries(CHANGES).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-        </Select>
-        <Input className="w-32" type="number" min={0} max={100} value={minPct} onChange={(e) => setMinPct(e.target.value)} aria-label="Minste eierandel %" />
-      </div>
+      {person ? (
+        <div className="flex items-center gap-2">
+          <Badge className="text-sm">Portefølje: {person.name} {person.birth_year ? `(f. ${person.birth_year})` : ""}</Badge>
+          <Button size="sm" variant="ghost" onClick={() => setPerson(null)}><X className="mr-1 h-4 w-4" /> Tilbake</Button>
+        </div>
+      ) : (
+        <div className="flex gap-2 flex-wrap">
+          <Input className="max-w-xs" placeholder="Navn (starter med), selskap eller org.nr" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Select value={trend} onValueChange={setTrend}>
+            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+            <SelectContent>{Object.entries(TRENDS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+          </Select>
+          <Input className="w-32" type="number" min={0} max={100} value={minPct} onChange={(e) => setMinPct(e.target.value)} aria-label="Minste eierandel %" />
+        </div>
+      )}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Aksjonær</TableHead><TableHead>Født</TableHead><TableHead>Sted</TableHead>
-                <TableHead>Selskap</TableHead><TableHead className="text-right">2024 %</TableHead>
-                <TableHead className="text-right">2025 %</TableHead><TableHead>Endring</TableHead>
+                <TableHead>Selskap</TableHead>
+                {YEARS.map((y) => <TableHead key={y} className="text-right">{y} %</TableHead>)}
+                <TableHead>Utvikling</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {busy ? (
-                <TableRow><TableCell colSpan={7} className="text-center"><Loader2 className="inline h-4 w-4 animate-spin" /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center"><Loader2 className="inline h-4 w-4 animate-spin" /></TableCell></TableRow>
               ) : rows.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Ingen treff.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground">Ingen treff.</TableCell></TableRow>
               ) : rows.map((r, i) => (
                 <TableRow key={i}>
-                  <TableCell className="font-medium">{r.shareholder_name}</TableCell>
+                  <TableCell className="font-medium">
+                    <button className="text-left hover:underline text-primary" onClick={() => setPerson({ name: r.shareholder_name, birth_year: r.birth_year })}>
+                      {r.shareholder_name}
+                    </button>
+                  </TableCell>
                   <TableCell>{r.birth_year ?? "—"}</TableCell>
                   <TableCell className="text-sm">{r.postal ?? "—"}</TableCell>
                   <TableCell className="text-sm">{r.company}<span className="block font-mono text-xs text-muted-foreground">{r.orgnr}</span></TableCell>
-                  <TableCell className="text-right font-mono">{r.pct_2024 ?? "—"}</TableCell>
-                  <TableCell className="text-right font-mono">{r.pct_2025 ?? "—"}</TableCell>
-                  <TableCell><Badge variant="secondary">{CHANGES[r.change_type]}</Badge></TableCell>
+                  {YEARS.map((y) => {
+                    const v = r[`pct_${y}` as keyof Row] as number | null;
+                    return <TableCell key={y} className="text-right font-mono">{v ?? "—"}</TableCell>;
+                  })}
+                  <TableCell><Badge variant="secondary">{TRENDS[r.trend] ?? r.trend}</Badge></TableCell>
                 </TableRow>
               ))}
             </TableBody>
