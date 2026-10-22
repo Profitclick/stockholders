@@ -1,5 +1,8 @@
 # Roadmap
 
+## Eierportefølje
+- [x] Årstabeller 2017–2025 og sammenligning per person; 14 tester grønne, eierflyt med ni tabeller og CSV verifisert. 2017–2021 markeres ikke innlastet.
+
 ## In progress — Plattformer & VPS (hvilke aksjonærer handler via hvilke plattformer)
 - [x] Årstabeller og sammenligning 2017–2025, med tydelig markering av ikke innlastede år (27 tester grønne; ni tabeller, personeiere per år og mobilvisning verifisert)
 - [x] Navngitte personeiere og full tilgjengelig eierandelshistorikk i VPS-eierprofilen (alle beholdninger, paginering, søk)
