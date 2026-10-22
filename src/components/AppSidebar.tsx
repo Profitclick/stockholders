@@ -8,6 +8,7 @@ import {
   Puzzle,
   ScrollText,
   Sparkles,
+  Landmark,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -34,6 +35,7 @@ const items = [
   { title: "Audit Log", url: "/audit-log", icon: ScrollText },
   { title: "Personeiere 🔒", url: "/eiere", icon: Users },
   { title: "Spør om eierskap 🔒", url: "/spor", icon: Sparkles },
+  { title: "VPS og meglere 🔒", url: "/plattformer", icon: Landmark },
 ];
 
 export function AppSidebar() {
