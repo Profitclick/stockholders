@@ -51,15 +51,17 @@ export default function PersonOwners() {
         query = query.eq("orgnr", s);
         localFilter = true;
       } else if (s) {
-        const clean = s.replace(/[,()%*]/g, "").toUpperCase();
-        query = query.or(`shareholder_name.like.${clean}%,company.like.${clean}%`);
         localFilter = true;
       } else {
         if (trend !== "all") query = query.eq("trend", trend);
         if (m > 0) query = query.gte("max_pct", m);
         query = query.order("max_pct", { ascending: false });
       }
-      const { data } = await query;
+      // Prefix search goes through a server function so the name/company indexes are used.
+      const prefix = s.replace(/[%_\\]/g, "");
+      const { data } = s && !person && !/^\d{9}$/.test(s)
+        ? await supabase.rpc("search_ownership_history", { p_prefix: prefix, p_limit: 2000 })
+        : await query;
       let list = ((data as (Row & { max_pct: number | null })[]) ?? []);
       if (localFilter) {
         list = list.filter((r) => (trend === "all" || r.trend === trend) && (!(m > 0) || (r.max_pct ?? 0) >= m));
