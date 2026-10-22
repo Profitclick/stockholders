@@ -1,12 +1,20 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Navigate, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 export function AppLayout() {
-  const { session } = useAuth();
+  const { session, isAdmin, loading } = useAuth();
+  if (loading) return <p className="p-6 text-muted-foreground">Laster…</p>;
+  if (!session) return <Navigate to="/auth" replace />;
+  if (!isAdmin) return (
+    <div className="p-6 space-y-3">
+      <p className="text-muted-foreground">Denne kontoen har ikke tilgang.</p>
+      <Button size="sm" variant="outline" onClick={() => supabase.auth.signOut()}>Logg ut</Button>
+    </div>
+  );
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
