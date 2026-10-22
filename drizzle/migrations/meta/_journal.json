@@ -85,6 +85,13 @@
       "when": 1792677708689,
       "tag": "0011_platform_exposure",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792683184205,
+      "tag": "0012_historical_ownership_signals",
+      "breakpoints": true
     }
   ]
 }

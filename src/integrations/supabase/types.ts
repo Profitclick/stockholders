@@ -568,6 +568,39 @@ export type Database = {
           },
         ]
       }
+      historical_ownership_signals: {
+        Row: {
+          decrease_count: number
+          entry_count: number
+          exit_count: number
+          increase_count: number
+          majority_count: number
+          orgnr: string
+          owner_count: number
+          updated_at: string
+        }
+        Insert: {
+          decrease_count?: number
+          entry_count?: number
+          exit_count?: number
+          increase_count?: number
+          majority_count?: number
+          orgnr: string
+          owner_count?: number
+          updated_at?: string
+        }
+        Update: {
+          decrease_count?: number
+          entry_count?: number
+          exit_count?: number
+          increase_count?: number
+          majority_count?: number
+          orgnr?: string
+          owner_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       investor_triggers: {
         Row: {
           created_at: string
@@ -1204,7 +1237,122 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      company_person_history: {
+        Row: {
+          birth_year: number | null
+          company: string | null
+          first_year: number | null
+          id: number | null
+          last_year: number | null
+          max_pct: number | null
+          orgnr: string | null
+          ownership_events: Json | null
+          pct_2022: number | null
+          pct_2023: number | null
+          pct_2024: number | null
+          pct_2025: number | null
+          postal: string | null
+          shareholder_name: string | null
+          shares_2022: number | null
+          shares_2023: number | null
+          shares_2024: number | null
+          shares_2025: number | null
+          trend: string | null
+          years_present: number | null
+        }
+        Insert: {
+          birth_year?: number | null
+          company?: string | null
+          first_year?: number | null
+          id?: number | null
+          last_year?: number | null
+          max_pct?: number | null
+          orgnr?: string | null
+          ownership_events?: never
+          pct_2022?: number | null
+          pct_2023?: number | null
+          pct_2024?: number | null
+          pct_2025?: number | null
+          postal?: string | null
+          shareholder_name?: string | null
+          shares_2022?: number | null
+          shares_2023?: number | null
+          shares_2024?: number | null
+          shares_2025?: number | null
+          trend?: string | null
+          years_present?: number | null
+        }
+        Update: {
+          birth_year?: number | null
+          company?: string | null
+          first_year?: number | null
+          id?: number | null
+          last_year?: number | null
+          max_pct?: number | null
+          orgnr?: string | null
+          ownership_events?: never
+          pct_2022?: number | null
+          pct_2023?: number | null
+          pct_2024?: number | null
+          pct_2025?: number | null
+          postal?: string | null
+          shareholder_name?: string | null
+          shares_2022?: number | null
+          shares_2023?: number | null
+          shares_2024?: number | null
+          shares_2025?: number | null
+          trend?: string | null
+          years_present?: number | null
+        }
+        Relationships: []
+      }
+      historical_playbook_candidates: {
+        Row: {
+          board_size: number | null
+          ceo_name: string | null
+          chair_name: string | null
+          company_age_years: number | null
+          contract_count: number | null
+          contract_value: number | null
+          decrease_count: number | null
+          email: string | null
+          entry_count: number | null
+          equity: number | null
+          eu_grants_count: number | null
+          exit_count: number | null
+          founded_date: string | null
+          grants_count: number | null
+          has_capital_increase: boolean | null
+          has_majority_change: boolean | null
+          has_new_shareholder: boolean | null
+          increase_count: number | null
+          industry: string | null
+          ip_rights_count: number | null
+          lead_score: number | null
+          majority_count: number | null
+          municipality: string | null
+          municipality_no: string | null
+          nace_code: string | null
+          nace_prefix: string | null
+          name: string | null
+          open_jobs_count: number | null
+          operating_profit: number | null
+          org_form: string | null
+          orgnr: string | null
+          owner_count: number | null
+          phone: string | null
+          postcode: string | null
+          profit_margin: number | null
+          research_council_count: number | null
+          revenue: number | null
+          skattefunn_count: number | null
+          total_debt: number | null
+          trigger_count: number | null
+          updated_at: string | null
+          website: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       aggregate_companies:
@@ -1232,8 +1380,13 @@ export type Database = {
       jsonb_obj: { Args: { j: Json }; Returns: Json }
       jsonb_object_keys_count: { Args: { j: Json }; Returns: number }
       normalize_company_name: { Args: { p_name: string }; Returns: string }
+      owner_history_events: {
+        Args: { p_pcts: number[]; p_shares: number[] }
+        Returns: Json
+      }
       ownership_ai_context: { Args: { q: string }; Returns: Json }
       refresh_company_signals: { Args: never; Returns: Json }
+      refresh_historical_ownership_signals: { Args: never; Returns: undefined }
       refresh_pipeline_stats: { Args: never; Returns: undefined }
       safe_date: { Args: { t: string }; Returns: string }
       safe_numeric: { Args: { t: string }; Returns: number }
