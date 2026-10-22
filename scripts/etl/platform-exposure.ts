@@ -28,12 +28,14 @@ const arg = (name: string, fallback?: string) => {
 const DIR = arg("dir", "/tmp/aksjereg")!;
 const CUR = Number(arg("current", "2025"));
 const PREV = Number(arg("previous", String(CUR - 1)));
+const FIRST = Number(arg("first", String(PREV)));
+const YEARS = Array.from({ length: CUR - FIRST + 1 }, (_, i) => FIRST + i);
 const UPLOAD = args.includes("--upload");
 const OUT = join(DIR, "out");
 const DB = join(DIR, "etl.duckdb");
 mkdirSync(OUT, { recursive: true });
 
-for (const y of [CUR, PREV]) {
+for (const y of YEARS) {
   const f = join(DIR, `aksjereg-${y}.parquet`);
   if (!existsSync(f)) throw new Error(`Missing ${f}`);
 }
@@ -57,7 +59,7 @@ duck(
   `
   CREATE OR REPLACE TABLE raw AS
   SELECT * FROM (
-    ${[CUR, PREV]
+    ${YEARS
       .map(
         (y) => `
     SELECT ${y}::INT AS yr,
@@ -283,7 +285,8 @@ const stats = {
   fund_accounts: (accounts as any[]).filter((a) => a.year === CUR && a.platform_id.startsWith("fund_")).length,
   classified_entities: mapping.length,
   direct_vps_persons: personMarket,
-  sources: [`aksjereg-${CUR}.parquet`, `aksjereg-${PREV}.parquet`],
+  history_years: YEARS,
+  sources: YEARS.map((y) => `aksjereg-${y}.parquet`),
   generated_at: new Date().toISOString(),
 };
 writeFileSync(join(OUT, "stats.json"), JSON.stringify(stats, null, 2));
@@ -295,67 +298,38 @@ if (!UPLOAD) {
   process.exit(0);
 }
 
-// ── 4. Upload ──────────────────────────────────────────────────────────────
+// ── 4. Upload through the admin-only platform-load edge function ──────────
 const URL_ = process.env.SUPABASE_URL;
-const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!URL_ || !KEY) throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for --upload");
-const headers = { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" };
+const TOKEN = process.env.ADMIN_ACCESS_TOKEN;
+const ANON = process.env.SUPABASE_ANON_KEY;
+if (!URL_ || !TOKEN || !ANON) throw new Error("SUPABASE_URL, SUPABASE_ANON_KEY and ADMIN_ACCESS_TOKEN are required for --upload");
 
-async function rest(method: string, path: string, body?: unknown, prefer?: string) {
+async function load(body: unknown) {
   for (let attempt = 1; attempt <= 4; attempt++) {
-    const res = await fetch(`${URL_}/rest/v1/${path}`, {
-      method,
-      headers: { ...headers, ...(prefer ? { Prefer: prefer } : {}) },
-      body: body === undefined ? undefined : JSON.stringify(body),
+    const res = await fetch(`${URL_}/functions/v1/platform-load`, {
+      method: "POST",
+      headers: { apikey: ANON, Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
-    if (res.ok) return res;
+    if (res.ok) return res.json();
     const text = await res.text();
-    if (res.status >= 500 && attempt < 4) {
-      await new Promise((r) => setTimeout(r, attempt * 1500));
-      continue;
-    }
-    throw new Error(`${method} ${path} → ${res.status}: ${text.slice(0, 400)}`);
+    if (res.status >= 500 && attempt < 4) { await new Promise((r) => setTimeout(r, attempt * 1500)); continue; }
+    throw new Error(`platform-load → ${res.status}: ${text.slice(0, 400)}`);
   }
-  throw new Error("unreachable");
 }
-
-async function insertBatches(table: string, rows: any[], size = 1000, prefer = "return=minimal") {
-  for (let i = 0; i < rows.length; i += size) {
-    await rest("POST", table, rows.slice(i, i + size), prefer);
-  }
+async function insertBatches(table: string, rows: any[], size = 4000) {
+  for (let i = 0; i < rows.length; i += size) await load({ action: "insert", table, rows: rows.slice(i, i + size) });
   console.log(`✓ ${table}: ${rows.length} rows`);
 }
 
-await insertBatches(
-  "custody_platforms",
-  CUSTODY_PLATFORMS.map((p, i) => ({
-    id: p.id,
-    name: p.name,
-    category: p.category,
-    category_label: PLATFORM_CATEGORIES[p.category].label,
-    country: p.country,
-    is_nominee: PLATFORM_CATEGORIES[p.category].isNominee,
-    investor_profile: PLATFORM_CATEGORIES[p.category].investorProfile,
-    sort_order: i,
-    updated_at: new Date().toISOString(),
-  })),
-  500,
-  "resolution=merge-duplicates,return=minimal",
-);
-
-const years = `(${CUR},${PREV})`;
-await rest("DELETE", `company_platform_holdings?year=in.${years}`);
+await load({ action: "reset" });
+const now = new Date().toISOString();
+await insertBatches("custody_platforms", CUSTODY_PLATFORMS.map((p, i) => ({
+  id: p.id, name: p.name, category: p.category, category_label: PLATFORM_CATEGORIES[p.category].label,
+  country: p.country, is_nominee: PLATFORM_CATEGORIES[p.category].isNominee,
+  investor_profile: PLATFORM_CATEGORIES[p.category].investorProfile, sort_order: i, updated_at: now,
+})));
 await insertBatches("company_platform_holdings", holdings);
-await rest("DELETE", `nominee_accounts?year=in.${years}`);
 await insertBatches("nominee_accounts", accounts);
-await rest("DELETE", `company_platform_profile?orgnr=neq.__none__`);
-await insertBatches("company_platform_profile", profile.map((p: any) => ({ ...p, updated_at: new Date().toISOString() })), 500);
-await insertBatches(
-  "platform_stats",
-  [{ year: CUR, stats, updated_at: new Date().toISOString() }],
-  1,
-  "resolution=merge-duplicates,return=minimal",
-);
-
-const refresh = await rest("POST", "rpc/refresh_company_signals", {});
-console.log("✓ refresh_company_signals:", await refresh.text());
+await insertBatches("company_platform_profile", profile.map((p: any) => ({ ...p, updated_at: now })));
+await insertBatches("platform_stats", [{ year: CUR, stats, updated_at: now }]);
