@@ -873,12 +873,22 @@ export type Database = {
           last_year: number
           max_pct: number | null
           orgnr: string
+          pct_2017: number | null
+          pct_2018: number | null
+          pct_2019: number | null
+          pct_2020: number | null
+          pct_2021: number | null
           pct_2022: number | null
           pct_2023: number | null
           pct_2024: number | null
           pct_2025: number | null
           postal: string | null
           shareholder_name: string
+          shares_2017: number | null
+          shares_2018: number | null
+          shares_2019: number | null
+          shares_2020: number | null
+          shares_2021: number | null
           shares_2022: number | null
           shares_2023: number | null
           shares_2024: number | null
@@ -894,12 +904,22 @@ export type Database = {
           last_year: number
           max_pct?: number | null
           orgnr: string
+          pct_2017?: number | null
+          pct_2018?: number | null
+          pct_2019?: number | null
+          pct_2020?: number | null
+          pct_2021?: number | null
           pct_2022?: number | null
           pct_2023?: number | null
           pct_2024?: number | null
           pct_2025?: number | null
           postal?: string | null
           shareholder_name: string
+          shares_2017?: number | null
+          shares_2018?: number | null
+          shares_2019?: number | null
+          shares_2020?: number | null
+          shares_2021?: number | null
           shares_2022?: number | null
           shares_2023?: number | null
           shares_2024?: number | null
@@ -915,12 +935,22 @@ export type Database = {
           last_year?: number
           max_pct?: number | null
           orgnr?: string
+          pct_2017?: number | null
+          pct_2018?: number | null
+          pct_2019?: number | null
+          pct_2020?: number | null
+          pct_2021?: number | null
           pct_2022?: number | null
           pct_2023?: number | null
           pct_2024?: number | null
           pct_2025?: number | null
           postal?: string | null
           shareholder_name?: string
+          shares_2017?: number | null
+          shares_2018?: number | null
+          shares_2019?: number | null
+          shares_2020?: number | null
+          shares_2021?: number | null
           shares_2022?: number | null
           shares_2023?: number | null
           shares_2024?: number | null
@@ -1247,12 +1277,22 @@ export type Database = {
           max_pct: number | null
           orgnr: string | null
           ownership_events: Json | null
+          pct_2017: number | null
+          pct_2018: number | null
+          pct_2019: number | null
+          pct_2020: number | null
+          pct_2021: number | null
           pct_2022: number | null
           pct_2023: number | null
           pct_2024: number | null
           pct_2025: number | null
           postal: string | null
           shareholder_name: string | null
+          shares_2017: number | null
+          shares_2018: number | null
+          shares_2019: number | null
+          shares_2020: number | null
+          shares_2021: number | null
           shares_2022: number | null
           shares_2023: number | null
           shares_2024: number | null
@@ -1269,12 +1309,22 @@ export type Database = {
           max_pct?: number | null
           orgnr?: string | null
           ownership_events?: never
+          pct_2017?: number | null
+          pct_2018?: number | null
+          pct_2019?: number | null
+          pct_2020?: number | null
+          pct_2021?: number | null
           pct_2022?: number | null
           pct_2023?: number | null
           pct_2024?: number | null
           pct_2025?: number | null
           postal?: string | null
           shareholder_name?: string | null
+          shares_2017?: number | null
+          shares_2018?: number | null
+          shares_2019?: number | null
+          shares_2020?: number | null
+          shares_2021?: number | null
           shares_2022?: number | null
           shares_2023?: number | null
           shares_2024?: number | null
@@ -1291,12 +1341,22 @@ export type Database = {
           max_pct?: number | null
           orgnr?: string | null
           ownership_events?: never
+          pct_2017?: number | null
+          pct_2018?: number | null
+          pct_2019?: number | null
+          pct_2020?: number | null
+          pct_2021?: number | null
           pct_2022?: number | null
           pct_2023?: number | null
           pct_2024?: number | null
           pct_2025?: number | null
           postal?: string | null
           shareholder_name?: string | null
+          shares_2017?: number | null
+          shares_2018?: number | null
+          shares_2019?: number | null
+          shares_2020?: number | null
+          shares_2021?: number | null
           shares_2022?: number | null
           shares_2023?: number | null
           shares_2024?: number | null
@@ -1400,12 +1460,22 @@ export type Database = {
           last_year: number
           max_pct: number | null
           orgnr: string
+          pct_2017: number | null
+          pct_2018: number | null
+          pct_2019: number | null
+          pct_2020: number | null
+          pct_2021: number | null
           pct_2022: number | null
           pct_2023: number | null
           pct_2024: number | null
           pct_2025: number | null
           postal: string | null
           shareholder_name: string
+          shares_2017: number | null
+          shares_2018: number | null
+          shares_2019: number | null
+          shares_2020: number | null
+          shares_2021: number | null
           shares_2022: number | null
           shares_2023: number | null
           shares_2024: number | null
