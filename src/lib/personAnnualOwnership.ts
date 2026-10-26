@@ -1,13 +1,9 @@
 import { DISPLAY_YEARS } from "./annualOwnership";
-import { OWNERSHIP_YEARS } from "./ownershipHistory";
+import { OWNERSHIP_YEARS, type YearColumns } from "./ownershipHistory";
 
-export type PersonAnnualRow = {
+export type PersonAnnualRow = YearColumns & {
   orgnr: string; company: string | null; shareholder_name: string; birth_year: number | null;
-  postal: string | null; pct_2022: number | null; pct_2023: number | null;
-  pct_2024: number | null; pct_2025: number | null;
-  shares_2022: number | null; shares_2023: number | null;
-  shares_2024: number | null; shares_2025: number | null;
-  trend: string; years_present: number;
+  postal: string | null; trend: string; years_present: number;
 };
 
 export function personYearValue(row: PersonAnnualRow, year: number, field: "pct" | "shares" = "pct"): number | null {

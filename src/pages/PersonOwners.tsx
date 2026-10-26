@@ -11,13 +11,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Download, Loader2, X } from "lucide-react";
 import Papa from "papaparse";
 import { DISPLAY_YEARS } from "@/lib/annualOwnership";
-import { OWNERSHIP_YEARS } from "@/lib/ownershipHistory";
+import { OWNERSHIP_YEARS, YEAR_COLUMNS } from "@/lib/ownershipHistory";
 import { personYearValue, type PersonAnnualRow as Row } from "@/lib/personAnnualOwnership";
 import { PersonAnnualPortfolio, formatPersonPct } from "@/components/PersonAnnualPortfolio";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TRENDS: Record<string, string> = {
-  all: "Alle", new_2025: "Ny eier 2025", new_2024: "Ny eier 2024", new_2023: "Ny eier 2023",
+  all: "Alle", new_2025: "Ny eier 2025", new_2024: "Ny eier 2024", new_2023: "Ny eier 2023", new_2022: "Ny eier 2022", new_2021: "Ny eier 2021", new_2020: "Ny eier 2020", new_2019: "Ny eier 2019", new_2018: "Ny eier 2018",
   increased: "Økt ≥1 pp", decreased: "Redusert ≥1 pp", exited: "Gått ut", stable: "Stabil",
 };
 
@@ -41,7 +41,7 @@ export default function PersonOwners() {
       // Search / person lookups use their own indexes; trend + min-% are applied in the browser
       // for those so the database never falls back to scanning millions of rows.
       let query = supabase.from("person_ownership_history")
-        .select("orgnr,company,shareholder_name,birth_year,postal,pct_2022,pct_2023,pct_2024,pct_2025,shares_2022,shares_2023,shares_2024,shares_2025,trend,years_present,max_pct")
+        .select(`orgnr,company,shareholder_name,birth_year,postal,${YEAR_COLUMNS},trend,years_present,max_pct`)
         .limit(1000);
       const s = q.trim();
       const m = Number(minPct);
@@ -105,7 +105,7 @@ export default function PersonOwners() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Personeiere</h1>
           <p className="text-sm text-muted-foreground">
-            Eierandeler 2017–2025. Registerdata 2022–2025 er innlastet; 2017–2021 mangler. Kun eiertilgang.
+            Eierandeler 2017–2025. Alle årganger 2017–2025 er innlastet fra prosjektets egen lagring. Kun eiertilgang.
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={exportCsv} disabled={busy || !rows.length || !!error}>
