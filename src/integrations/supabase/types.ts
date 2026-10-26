@@ -1445,6 +1445,55 @@ export type Database = {
         Returns: Json
       }
       ownership_ai_context: { Args: { q: string }; Returns: Json }
+      ownership_export_page: {
+        Args: {
+          p_after_id?: number
+          p_birth_year?: number
+          p_limit?: number
+          p_min_pct?: number
+          p_orgnr?: string
+          p_person?: string
+          p_prefix?: string
+          p_trend?: string
+        }
+        Returns: {
+          birth_year: number | null
+          company: string | null
+          first_year: number
+          id: number
+          last_year: number
+          max_pct: number | null
+          orgnr: string
+          pct_2017: number | null
+          pct_2018: number | null
+          pct_2019: number | null
+          pct_2020: number | null
+          pct_2021: number | null
+          pct_2022: number | null
+          pct_2023: number | null
+          pct_2024: number | null
+          pct_2025: number | null
+          postal: string | null
+          shareholder_name: string
+          shares_2017: number | null
+          shares_2018: number | null
+          shares_2019: number | null
+          shares_2020: number | null
+          shares_2021: number | null
+          shares_2022: number | null
+          shares_2023: number | null
+          shares_2024: number | null
+          shares_2025: number | null
+          trend: string
+          years_present: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "person_ownership_history"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       refresh_company_signals: { Args: never; Returns: Json }
       refresh_historical_ownership_signals: { Args: never; Returns: undefined }
       refresh_historical_ownership_signals_range: {
