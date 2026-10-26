@@ -113,6 +113,13 @@
       "when": 1792979469549,
       "tag": "0015_poh_drop_indexes_for_bulk_load",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792980382433,
+      "tag": "0016_poh_recreate_indexes",
+      "breakpoints": true
     }
   ]
 }
