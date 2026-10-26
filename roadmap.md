@@ -1,5 +1,8 @@
 # Roadmap
 
+## Eksportgrense
+- [ ] Øke eksport til 500 000 filtrerte rader med puljevis henting og teste eksportflyten; ingen reimport.
+
 ## Eierportefølje
 - [x] Årstabeller 2017–2025 og sammenligning per person; 14 tester grønne, eierflyt med ni tabeller og CSV verifisert. 2017–2021 markeres ikke innlastet.
 
