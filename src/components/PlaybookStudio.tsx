@@ -76,7 +76,7 @@ const PLAYBOOKS: Playbook[] = [
   {
     id: "retail-investorer", title: "Retail-investorer & småsparere", historical: true,
     pitch: "Selskaper med mange direkte personeiere og både inngang og utgang av eiere 2017–2025 — der aktive småsparere roterer. Brukes til målgruppe-/lookalike-analyse, ikke direkte kontakt med privatpersoner.",
-    apply: (q) => q.gte("owner_count", 20).gt("entry_count", 0).gt("exit_count", 0).order("exit_count", { ascending: false }),
+    apply: (q) => q.gte("owner_count", 20).gt("entry_count", 0).gt("exit_count", 0),
   },
   {
     id: "eierskifte",
