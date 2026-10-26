@@ -27,9 +27,11 @@ Deno.serve(async (req) => {
     return json({ deleted: count ?? 0 });
   }
   if (body?.action === "refresh_signals") {
-    const { error } = await admin.rpc("refresh_historical_ownership_signals");
+    const from = String(body.from ?? ""), to = String(body.to ?? "");
+    if (!/^\d{1,9}$/.test(from) || !/^\d{1,10}$/.test(to)) return json({ error: "ugyldig orgnr-intervall" }, 400);
+    const { data, error } = await admin.rpc("refresh_historical_ownership_signals_range", { p_from: from, p_to: to });
     if (error) return json({ error: error.message }, 500);
-    return json({ refreshed: true });
+    return json({ refreshed: data });
   }
   const rows = Array.isArray(body?.rows) ? body.rows : null;
   if (!rows || rows.length > 10000) return json({ error: "rows mangler eller for mange" }, 400);
