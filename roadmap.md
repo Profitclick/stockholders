@@ -24,4 +24,4 @@
 - [x] Innlogging (kun eier) + lukket personeierliste (2024→2025, ≥5 %)
 - [x] 4-års eierhistorikk 2022–2025 for alle personaksjonærer (3,76 mill. person–selskap-rader) på /eiere
 - [x] Eierhistorikk 2017–2025 fra prosjektets lagring (shareholders), eksterne kilder fjernet
-- [ ] Plattform/VPS-tabeller for 2017–2021 (egen ETL-kjøring)
+- [x] Plattform/VPS-tabeller 2017–2025 (89 107 posisjoner)
