@@ -120,6 +120,13 @@
       "when": 1792980382433,
       "tag": "0016_poh_recreate_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792980656392,
+      "tag": "0017_refresh_signals_range",
+      "breakpoints": true
     }
   ]
 }

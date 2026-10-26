@@ -1447,6 +1447,10 @@ export type Database = {
       ownership_ai_context: { Args: { q: string }; Returns: Json }
       refresh_company_signals: { Args: never; Returns: Json }
       refresh_historical_ownership_signals: { Args: never; Returns: undefined }
+      refresh_historical_ownership_signals_range: {
+        Args: { p_from: string; p_to: string }
+        Returns: number
+      }
       refresh_pipeline_stats: { Args: never; Returns: undefined }
       safe_date: { Args: { t: string }; Returns: string }
       safe_numeric: { Args: { t: string }; Returns: number }
