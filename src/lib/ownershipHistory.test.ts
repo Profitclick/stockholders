@@ -1,9 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { ownershipEvents, type OwnershipHistory } from "./ownershipHistory";
 const row: OwnershipHistory = { id: 1, orgnr: "923609016", shareholder_name: "Test", birth_year: 1980,
+  pct_2017: null, pct_2018: null, pct_2019: null, pct_2020: null, pct_2021: null,
+  shares_2017: null, shares_2018: null, shares_2019: null, shares_2020: null, shares_2021: null,
   pct_2022: 10, pct_2023: 31, pct_2024: 60, pct_2025: 40,
   shares_2022: 10, shares_2023: 31, shares_2024: 60, shares_2025: 40 };
-describe("Full 2022–2025 register history", () => {
+describe("Full 2017–2025 register history", () => {
+  it("detects movements in the 2017–2021 years", () => {
+    const e = ownershipEvents({ ...row, pct_2017: 10, shares_2017: 10, pct_2018: 55, shares_2018: 55 });
+    expect(e.filter(x => x.from === 2017).map(x => x.kind).sort()).toEqual(["increase", "majority_gain"]);
+    expect(e.find(x => x.from === 2018)).toMatchObject({ kind: "exit", to: 2019 });
+  });
   it("includes movements in all three periods, not just 2025", () => {
     expect(ownershipEvents(row).filter(e => e.kind === "increase").map(e => e.from)).toEqual([2022, 2023]);
     expect(ownershipEvents(row).filter(e => e.kind === "decrease").map(e => e.from)).toEqual([2024]);

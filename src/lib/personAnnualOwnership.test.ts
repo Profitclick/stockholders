@@ -3,17 +3,19 @@ import { personAnnualRows, personYearChange, personYearValue, type PersonAnnualR
 
 const row: PersonAnnualRow = {
   orgnr: "923609016", company: "Test AS", shareholder_name: "Test", birth_year: 1980, postal: null,
+  pct_2017: 5, pct_2018: null, pct_2019: null, pct_2020: null, pct_2021: null,
+  shares_2017: 50, shares_2018: null, shares_2019: null, shares_2020: null, shares_2021: null,
   pct_2022: null, pct_2023: 0, pct_2024: 0.001, pct_2025: 20,
   shares_2022: null, shares_2023: 1, shares_2024: 2, shares_2025: 100,
   trend: "increased", years_present: 3,
 };
 
 describe("Person annual portfolios", () => {
-  it("marks every unloaded year 2017–2021 as unavailable", () => {
-    for (const year of [2017, 2018, 2019, 2020, 2021]) {
-      expect(personYearValue(row, year)).toBeNull();
-      expect(personAnnualRows([row], year)).toEqual([]);
-    }
+  it("reads loaded 2017 values and leaves absent 2018–2021 holdings empty", () => {
+    expect(personYearValue(row, 2017)).toBe(5);
+    expect(personAnnualRows([row], 2017)).toEqual([row]);
+    for (const year of [2018, 2019, 2020, 2021]) expect(personAnnualRows([row], year)).toEqual([]);
+    expect(personYearChange(row, 2018)).toBeNull();
   });
   it("includes all observed holdings including rounded zero and tiny percentages", () => {
     expect(personAnnualRows([row], 2023)).toEqual([row]);
