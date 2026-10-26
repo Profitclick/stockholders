@@ -7,7 +7,7 @@
  *
  * Usage (sandbox):
  *   bun scripts/etl/platform-exposure.ts --dir /tmp/aksjereg --current 2025 --previous 2024 [--upload]
- * Expects files named aksjereg-<year>.parquet in --dir (download from the Parquet host first).
+ * Expects files named aksjereg-<year>.parquet in --dir (download from the shareholders storage bucket first).
  * Requires the DuckDB CLI on PATH; --upload requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
