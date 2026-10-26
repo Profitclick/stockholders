@@ -56,7 +56,7 @@ export function CompanyOwnerHistory({ orgnr }: { orgnr: string }) {
       const { data, count, error: err } = await query;
       if (cancelled) return;
       if (err) { setError("Kunne ikke hente eierhistorikken. Prøv igjen."); setTotal(0); }
-      else { setRows((data ?? []) as OwnershipHistory[]); setTotal(count ?? 0); }
+      else { setRows((data ?? []) as unknown as OwnershipHistory[]); setTotal(count ?? 0); }
       setBusy(false);
     }, 250);
     return () => { cancelled = true; clearTimeout(timer); };

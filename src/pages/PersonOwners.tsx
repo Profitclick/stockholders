@@ -67,7 +67,7 @@ export default function PersonOwners() {
         : await query;
       if (cancelled) return;
       if (queryError) { setError("Kunne ikke hente eierporteføljen. Prøv igjen."); setBusy(false); return; }
-      let list = ((data as (Row & { max_pct: number | null })[]) ?? []);
+      let list = ((data as unknown as (Row & { max_pct: number | null })[]) ?? []);
       if (localFilter) {
         list = list.filter((r) => (trend === "all" || r.trend === trend) && (!(m > 0) || (r.max_pct ?? 0) >= m));
       }
