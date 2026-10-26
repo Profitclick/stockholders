@@ -15,6 +15,8 @@ import { OWNERSHIP_YEARS, YEAR_COLUMNS } from "@/lib/ownershipHistory";
 import { personYearValue, type PersonAnnualRow as Row } from "@/lib/personAnnualOwnership";
 import { PersonAnnualPortfolio, formatPersonPct } from "@/components/PersonAnnualPortfolio";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { collectExportPages, MAX_EXPORT_ROWS } from "@/lib/exportLimits";
+import { toast } from "sonner";
 
 const TRENDS: Record<string, string> = {
   all: "Alle", new_2025: "Ny eier 2025", new_2024: "Ny eier 2024", new_2023: "Ny eier 2023", new_2022: "Ny eier 2022", new_2021: "Ny eier 2021", new_2020: "Ny eier 2020", new_2019: "Ny eier 2019", new_2018: "Ny eier 2018",
@@ -32,6 +34,8 @@ export default function PersonOwners() {
   const [view, setView] = useState("comparison");
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
+  const [exporting, setExporting] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -82,8 +86,28 @@ export default function PersonOwners() {
   if (!session) return <Navigate to="/auth" replace />;
   if (!isAdmin) return <p className="text-muted-foreground">Denne kontoen har ikke tilgang til personlister.</p>;
 
-  function exportCsv() {
-    const exported = rows.map(row => ({
+  async function exportCsv() {
+    setExporting(true);
+    setExportCount(0);
+    const parts: BlobPart[] = ["\uFEFF"];
+    let afterId = 0;
+    const search = q.trim();
+    try {
+      const count = await collectExportPages<Row>(async (_offset, size) => {
+        const { data, error } = await supabase.rpc("ownership_export_page", {
+          p_after_id: afterId, p_limit: size,
+          p_prefix: /^\d{9}$/.test(search) ? "" : search,
+          p_orgnr: /^\d{9}$/.test(search) ? search : undefined,
+          p_person: person?.name, p_birth_year: person?.birth_year ?? undefined,
+          p_trend: trend, p_min_pct: Number(minPct) || 0,
+        });
+        if (error) throw error;
+        const page = data ?? [];
+        const last = page.at(-1);
+        if (last) afterId = last.id;
+        return page;
+      }, (page, first) => {
+        const exported = page.map(row => ({
       orgnr: row.orgnr, company: row.company, shareholder_name: row.shareholder_name, birth_year: row.birth_year,
       ...Object.fromEntries(DISPLAY_YEARS.flatMap(year => [
         [`pct_${year}`, personYearValue(row, year)],
@@ -91,12 +115,19 @@ export default function PersonOwners() {
         [`status_${year}`, OWNERSHIP_YEARS.some(y => y === year) ? "Innlastet" : "Ikke innlastet"],
       ])),
     }));
-    const blob = new Blob(["\uFEFF", Papa.unparse(exported)], { type: "text/csv;charset=utf-8" });
+        parts.push((first ? "" : "\r\n") + Papa.unparse(exported, { header: first }));
+      }, MAX_EXPORT_ROWS, setExportCount);
+      if (count === 0) { toast.error("Ingen treff å eksportere."); return; }
+    const blob = new Blob(parts, { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = person ? `portefolje_${person.name}.csv` : `personeiere_${trend}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
+      toast.success(`${count.toLocaleString("nb-NO")} rader eksportert${count === MAX_EXPORT_ROWS ? " — eksportgrensen er nådd" : ""}`);
+    } catch {
+      toast.error("Eksporten feilet. Ingen ufullstendig fil ble lastet ned. Prøv igjen.");
+    } finally { setExporting(false); }
   }
 
   return (
@@ -108,8 +139,8 @@ export default function PersonOwners() {
             Eierandeler 2017–2025. Alle årganger 2017–2025 er innlastet fra prosjektets egen lagring. Kun eiertilgang.
           </p>
         </div>
-        <Button size="sm" variant="outline" onClick={exportCsv} disabled={busy || !rows.length || !!error}>
-          <Download className="mr-2 h-4 w-4" /> CSV ({rows.length})
+        <Button size="sm" variant="outline" onClick={exportCsv} disabled={busy || exporting || !rows.length || !!error}>
+          {exporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />} {exporting ? `Hentet ${exportCount.toLocaleString("nb-NO")}` : "CSV (maks 500 000)"}
         </Button>
       </div>
       {person ? (

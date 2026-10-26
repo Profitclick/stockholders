@@ -12,6 +12,7 @@ import { Download, Loader2, RefreshCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
+import { collectExportPages, exportLimit, MAX_EXPORT_ROWS } from "@/lib/exportLimits";
 
 type SignalRow = {
   orgnr: string;
@@ -138,7 +139,9 @@ export function PlaybookStudio() {
   const [needSkattefunn, setNeedSkattefunn] = useState(false);
   const [needContract, setNeedContract] = useState(false);
   const [needContact, setNeedContact] = useState(false);
-  const [limit, setLimit] = useState("200");
+  const [limit, setLimit] = useState(String(MAX_EXPORT_ROWS));
+  const [exporting, setExporting] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
 
   const playbook = useMemo(() => PLAYBOOKS.find((p) => p.id === active) ?? PLAYBOOKS[0], [active]);
 
@@ -149,7 +152,7 @@ export function PlaybookStudio() {
   }, [params, validCompany]);
 
   const buildQuery = useCallback(
-    (pb: Playbook, head: boolean) => {
+    (pb: Playbook, head: boolean, exportPage?: { offset: number; size: number }) => {
       const cols = pb.historical ? `${SELECT_COLS},owner_count,entry_count,exit_count,majority_count,increase_count,decrease_count` : SELECT_COLS;
       const base = pb.historical
         ? supabase.from("historical_playbook_candidates").select(head ? "orgnr" : cols, { count: "exact", head })
@@ -165,7 +168,8 @@ export function PlaybookStudio() {
         if (needSkattefunn) q = q.gt("skattefunn_count", 0);
         if (needContract) q = q.gt("contract_count", 0);
         if (needContact) q = q.not("ceo_name", "is", null);
-        q = q.order("lead_score", { ascending: false }).limit(Math.min(Number(limit) || 200, 2000));
+        q = q.order("lead_score", { ascending: false }).order("orgnr");
+        q = exportPage ? q.range(exportPage.offset, exportPage.offset + exportPage.size - 1) : q.limit(Math.min(exportLimit(Number(limit)), 1000));
       }
       return q;
     },
@@ -244,12 +248,22 @@ export function PlaybookStudio() {
     }
   }
 
-  function exportRows(fmt: "csv" | "xlsx") {
+  async function exportRows(fmt: "csv" | "xlsx") {
     if (rows.length === 0) {
       toast.error("Ingen kandidater å eksportere");
       return;
     }
-    const flat = rows.map((r) => ({
+    setExporting(true);
+    setExportCount(0);
+    const parts: BlobPart[] = ["\uFEFF"];
+    const worksheet = XLSX.utils.aoa_to_sheet([]);
+    try {
+    const count = await collectExportPages<SignalRow>(async (offset, size) => {
+      const { data, error } = await buildQuery(playbook, false, { offset, size });
+      if (error) throw error;
+      return (data as unknown as SignalRow[]) ?? [];
+    }, (page, first) => {
+    const flat = page.map((r) => ({
       Orgnr: r.orgnr,
       Selskap: r.name,
       Bransje: r.industry ?? "",
@@ -285,15 +299,19 @@ export function PlaybookStudio() {
       } : {}),
     }));
 
+    if (fmt === "xlsx") XLSX.utils.sheet_add_json(worksheet, flat, { origin: first ? 0 : -1, skipHeader: !first });
+    else parts.push((first ? "" : "\r\n") + Papa.unparse(flat, { header: first }));
+    }, exportLimit(Number(limit)), setExportCount);
+    if (count === 0) { toast.error("Ingen kandidater å eksportere"); return; }
     const stamp = new Date().toISOString().slice(0, 10);
     const filename = `playbook_${playbook.id}_${stamp}.${fmt}`;
 
     if (fmt === "xlsx") {
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(flat), "Leads");
+      XLSX.utils.book_append_sheet(wb, worksheet, "Leads");
       XLSX.writeFile(wb, filename);
     } else {
-      const blob = new Blob(["\uFEFF" + Papa.unparse(flat)], { type: "text/csv;charset=utf-8" });
+      const blob = new Blob(parts, { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -301,7 +319,10 @@ export function PlaybookStudio() {
       a.click();
       URL.revokeObjectURL(url);
     }
-    toast.success(`${rows.length} leads eksportert`);
+    toast.success(`${nf.format(count)} leads eksportert${count === exportLimit(Number(limit)) ? " — eksportgrensen er nådd" : ""}`);
+    } catch {
+      toast.error("Eksporten feilet. Ingen ufullstendig fil ble lastet ned. Prøv igjen.");
+    } finally { setExporting(false); }
   }
 
   return (
@@ -377,8 +398,8 @@ export function PlaybookStudio() {
               <Input value={municipality} onChange={(e) => setMunicipality(e.target.value)} placeholder="f.eks. Bergen" />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Maks antall</Label>
-              <Input type="number" value={limit} onChange={(e) => setLimit(e.target.value)} min="10" max="2000" />
+              <Label className="text-xs">Maks antall i eksport</Label>
+              <Input aria-label="Maks antall i eksport" type="number" value={limit} onChange={(e) => setLimit(e.target.value)} min="1" max={MAX_EXPORT_ROWS} disabled={exporting} />
             </div>
           </div>
 
@@ -398,18 +419,18 @@ export function PlaybookStudio() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={runPlaybook} disabled={loading}>
+            <Button size="sm" onClick={runPlaybook} disabled={loading || exporting}>
               {loading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : null}
               Kjør playbook
             </Button>
-            <Button size="sm" variant="outline" onClick={() => exportRows("csv")} disabled={rows.length === 0}>
+            <Button size="sm" variant="outline" onClick={() => exportRows("csv")} disabled={rows.length === 0 || loading || exporting}>
               <Download className="mr-2 h-3 w-3" /> CSV
             </Button>
-            <Button size="sm" variant="outline" onClick={() => exportRows("xlsx")} disabled={rows.length === 0}>
+            <Button size="sm" variant="outline" onClick={() => exportRows("xlsx")} disabled={rows.length === 0 || loading || exporting}>
               <Download className="mr-2 h-3 w-3" /> Excel
             </Button>
             <span className="self-center text-xs text-muted-foreground">
-              {loading ? "Henter…" : `${nf.format(rows.length)} vist av ${nf.format(total)} treff`}
+              {exporting ? `Eksport: ${nf.format(exportCount)} rader hentet` : loading ? "Henter…" : `${nf.format(rows.length)} vist av ${nf.format(total)} treff`}
             </span>
           </div>
         </CardContent>
