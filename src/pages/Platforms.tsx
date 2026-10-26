@@ -17,7 +17,7 @@ import {
 } from "recharts";
 import { CATEGORY_ORDER, PLATFORM_BY_ID, PLATFORM_CATEGORIES, type PlatformCategory } from "@/lib/custodyPlatforms";
 
-const YEARS = [2022, 2023, 2024, 2025];
+const YEARS = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
 const COLORS = [1, 2, 3, 4, 5].map((i) => `hsl(var(--chart-${i}))`);
 const color = (i: number) => COLORS[i % COLORS.length];
 const pct = (v: number | null | undefined, d = 1) => (v == null ? "–" : `${Number(v).toFixed(d)} %`);
@@ -38,7 +38,7 @@ export default function Platforms() {
       <div>
         <h1 className="text-2xl font-semibold">VPS og meglereksponering</h1>
         <p className="text-sm text-muted-foreground max-w-3xl">
-          Hvor stor del av hvert selskap som ligger på forvalterkontoer hos nettmeglere, banker og meglerhus (2022–2025).
+          Hvor stor del av hvert selskap som ligger på forvalterkontoer hos nettmeglere, banker og meglerhus (2017–2025).
           Viser registrert forvalter — ikke hvem som eier bak kontoen, eller hvor en enkeltperson faktisk handler.
         </p>
       </div>
@@ -110,7 +110,7 @@ function Overview() {
       </div>
       <div className="grid md:grid-cols-2 gap-4">
         <Card>
-          <CardHeader><CardTitle className="text-base">Selskaper per plattformtype, 2022–2025</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Selskaper per plattformtype, 2017–2025</CardTitle></CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer>
               <BarChart data={byYear}>
@@ -255,7 +255,7 @@ function CompanyView() {
           <AnnualPlatformOwnership rows={hold} loadedYears={loadedYears} busy={holdBusy} error={holdError} />
           {holdError && <Button size="sm" variant="outline" onClick={() => setHoldRetry(v => v + 1)}>Prøv igjen</Button>}
           <Card>
-            <CardHeader><CardTitle className="text-base">Eierhistorie 2022–2025 (andel per plattformtype)</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Eierhistorie 2017–2025 (andel per plattformtype)</CardTitle></CardHeader>
             <CardContent className="h-72">
               <ResponsiveContainer>
                 <LineChart data={history}>
@@ -326,7 +326,7 @@ function PlatformView() {
         <SelectContent>{plats.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
       </Select>
       <Card>
-        <CardHeader><CardTitle className="text-base">Antall selskaper med beholdning, 2022–2025</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">Antall selskaper med beholdning, 2017–2025</CardTitle></CardHeader>
         <CardContent className="h-56">
           <ResponsiveContainer>
             <BarChart data={trend}><XAxis dataKey="year" /><YAxis /><Tooltip /><Bar dataKey="companies" name="Selskaper" fill={color(1)} /></BarChart>
