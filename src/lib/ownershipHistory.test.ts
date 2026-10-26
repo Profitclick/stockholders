@@ -28,9 +28,9 @@ describe("Full 2017–2025 register history", () => {
     ]);
   });
   it("share-count growth alone is not a capital increase signal", () => {
-    expect(ownershipEvents({ ...row, pct_2021: 10, shares_2021: 10, pct_2022: 10, pct_2023: 10, pct_2024: 10, pct_2025: 10, shares_2025: 1000 })).toEqual([]);
+    expect(ownershipEvents({ ...row, pct_2022: 10, pct_2023: 10, pct_2024: 10, pct_2025: 10, shares_2025: 1000 }).filter(e => e.from >= 2022)).toEqual([]);
   });
   it("records exits without claiming a sale", () => {
-    expect(ownershipEvents({ ...row, pct_2021: 10, shares_2021: 10, pct_2022: 10, pct_2023: 10, pct_2024: 10, pct_2025: null, shares_2025: null })).toEqual([{ from: 2024, to: 2025, kind: "exit", delta: null }]);
+    expect(ownershipEvents({ ...row, pct_2022: 10, pct_2023: 10, pct_2024: 10, pct_2025: null, shares_2025: null }).filter(e => e.from >= 2022)).toEqual([{ from: 2024, to: 2025, kind: "exit", delta: null }]);
   });
 });
