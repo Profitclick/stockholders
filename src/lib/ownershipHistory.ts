@@ -1,13 +1,14 @@
-export const OWNERSHIP_YEARS = [2022, 2023, 2024, 2025] as const;
+export const OWNERSHIP_YEARS = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025] as const;
+export type OwnershipYear = typeof OWNERSHIP_YEARS[number];
+export type YearColumns = { [K in OwnershipYear as `pct_${K}`]: number | null } & { [K in OwnershipYear as `shares_${K}`]: number | null };
+export const YEAR_COLUMNS = OWNERSHIP_YEARS.flatMap(y => [`pct_${y}`, `shares_${y}`]).join(",");
 export const EVENT_LABELS: Record<string, string> = {
   entry: "Inn i registeret", exit: "Ut av registeret", majority_gain: "Over 50 %",
   majority_loss: "Under eller lik 50 %", increase: "Økt ≥20 pp", decrease: "Redusert ≥20 pp",
 };
 export type OwnershipEvent = { from: number; to: number; kind: string; delta: number | null };
-export type OwnershipHistory = {
+export type OwnershipHistory = YearColumns & {
   id: number; orgnr: string; shareholder_name: string; birth_year: number | null;
-  pct_2022: number | null; pct_2023: number | null; pct_2024: number | null; pct_2025: number | null;
-  shares_2022: number | null; shares_2023: number | null; shares_2024: number | null; shares_2025: number | null;
   ownership_events?: unknown;
 };
 // Same adjacent-register predicates as public.owner_history_events; no inferred trades or capital issues.

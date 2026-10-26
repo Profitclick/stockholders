@@ -99,6 +99,34 @@
       "when": 1792683285817,
       "tag": "0013_secure_historical_refresh",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792978820723,
+      "tag": "0014_ownership_history_2017_2021",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792979469549,
+      "tag": "0015_poh_drop_indexes_for_bulk_load",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792980382433,
+      "tag": "0016_poh_recreate_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792980656392,
+      "tag": "0017_refresh_signals_range",
+      "breakpoints": true
     }
   ]
 }

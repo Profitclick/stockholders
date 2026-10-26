@@ -29,8 +29,8 @@ const PROBES: Probe[] = [
   },
   {
     id: "parquet",
-    label: "Aksjonærregister (Parquet 2022–2025)",
-    url: "https://marketrends.online/parquet/aksjereg-2025.parquet",
+    label: "Aksjonærregister (Parquet 2017–2025, prosjektlagring)",
+    url: `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/shareholders/aksjereg-2025.parquet`,
     method: "HEAD",
     critical: false,
   },

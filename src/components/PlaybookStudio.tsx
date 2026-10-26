@@ -60,7 +60,7 @@ interface Playbook {
 const PLAYBOOKS: Playbook[] = [
   {
     id: "historisk-majoritet", title: "Historisk majoritetsskifte", historical: true,
-    pitch: "Personandel krysset 50 % i minst ett av årsintervallene 2022–2025.",
+    pitch: "Personandel krysset 50 % i minst ett av årsintervallene 2017–2025.",
     apply: (q) => q.gt("majority_count", 0),
   },
   {
@@ -270,7 +270,7 @@ export function PlaybookStudio() {
       "Kontraktsverdi": r.contract_value,
       Leadscore: r.lead_score,
       ...(playbook.historical ? {
-        "Historikkperiode": "2022–2025",
+        "Historikkperiode": "2017–2025",
         "Personeierposter": r.owner_count ?? 0,
         "Registerinnganger": r.entry_count ?? 0,
         "Registerutganger": r.exit_count ?? 0,
@@ -327,7 +327,7 @@ export function PlaybookStudio() {
         <Button size="sm" variant="outline" onClick={() => { const next = new URLSearchParams(params); next.delete("company"); setParams(next); }}>Vis alle selskaper</Button>
         <Button size="sm" variant="link" asChild><Link to={`/plattformer?company=${validCompany}`}>Tilbake til eierprofil</Link></Button>
       </div>}
-      {playbook.historical && <p className="text-xs text-muted-foreground">2022–2025 · direkte registrerte personeiere · selskaper med beriket selskapsprofil. Inngang/utgang er registerobservasjoner, ikke dokumenterte handler. Eksisterende leadscore beholdes; signalene gir ikke automatisk kontaktgrunnlag.</p>}
+      {playbook.historical && <p className="text-xs text-muted-foreground">2017–2025 · direkte registrerte personeiere · selskaper med beriket selskapsprofil. Inngang/utgang er registerobservasjoner, ikke dokumenterte handler. Eksisterende leadscore beholdes; signalene gir ikke automatisk kontaktgrunnlag.</p>}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {PLAYBOOKS.map((pb) => (
