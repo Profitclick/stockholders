@@ -759,6 +759,51 @@ export type Database = {
         }
         Relationships: []
       }
+      market_quotes: {
+        Row: {
+          currency: string | null
+          isin: string
+          last_price: number | null
+          listed_name: string
+          market: string | null
+          orgnr: string
+          quote_date: string | null
+          source: string
+          symbol: string
+          turnover: number | null
+          updated_at: string
+          volume: number | null
+        }
+        Insert: {
+          currency?: string | null
+          isin: string
+          last_price?: number | null
+          listed_name: string
+          market?: string | null
+          orgnr: string
+          quote_date?: string | null
+          source?: string
+          symbol: string
+          turnover?: number | null
+          updated_at?: string
+          volume?: number | null
+        }
+        Update: {
+          currency?: string | null
+          isin?: string
+          last_price?: number | null
+          listed_name?: string
+          market?: string | null
+          orgnr?: string
+          quote_date?: string | null
+          source?: string
+          symbol?: string
+          turnover?: number | null
+          updated_at?: string
+          volume?: number | null
+        }
+        Relationships: []
+      }
       nominee_accounts: {
         Row: {
           account_name: string
@@ -1410,6 +1455,31 @@ export type Database = {
           trigger_count: number | null
           updated_at: string | null
           website: string | null
+        }
+        Relationships: []
+      }
+      retail_market_targets: {
+        Row: {
+          currency: string | null
+          direct_person_pct: number | null
+          direct_person_shift_pp: number | null
+          entry_count: number | null
+          exit_count: number | null
+          industry: string | null
+          isin: string | null
+          last_price: number | null
+          market: string | null
+          name: string | null
+          orgnr: string | null
+          owner_count: number | null
+          quote_date: string | null
+          quote_updated_at: string | null
+          retail_pct: number | null
+          retail_shift_pp: number | null
+          symbol: string | null
+          total_shareholders: number | null
+          turnover: number | null
+          volume: number | null
         }
         Relationships: []
       }
