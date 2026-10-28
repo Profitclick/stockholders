@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
 import { collectExportPages, exportLimit, MAX_EXPORT_ROWS } from "@/lib/exportLimits";
+import { RetailMarketTargets } from "@/components/RetailMarketTargets";
 
 type SignalRow = {
   orgnr: string;
@@ -378,6 +379,7 @@ export function PlaybookStudio() {
           </button>
         ))}
       </div>
+      {active === "retail-investorer" && <RetailMarketTargets />}
 
       <Card>
         <CardHeader className="pb-3">
