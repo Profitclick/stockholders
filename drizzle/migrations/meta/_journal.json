@@ -148,6 +148,13 @@
       "when": 1793251388076,
       "tag": "0020_background_export_jobs",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793251673153,
+      "tag": "0021_restrict_background_export_capabilities",
+      "breakpoints": true
     }
   ]
 }
