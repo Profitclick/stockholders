@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Bakgrunnseksport
-- [ ] Admin-låst, varig eksportkø med puljevise CSV-filer i privat Cloud Storage; ingen reimport.
-- [ ] Eierportefølje og Playbook: start eksport, fremdrift, gjenopptakelse og nedlasting i arkivet.
-- [ ] Tester og innlogget gjennomgang av eksport og tilgangsvern.
+- [x] Admin-låst, varig eksportkø med puljevise CSV-filer i privat Cloud Storage; ingen reimport.
+- [x] Eierportefølje og Playbook: start eksport, fremdrift, gjenopptakelse og nedlasting i arkivet.
+- [x] 10 tester grønne; innlogget eksport av 93 411 unike rader i 10 filer og ni årskolonner verifisert, anonym start gir 401 og worker-token kan ikke leses av klienten. Full millioneksport og vanlig brukerkonto er ikke kjørt.
 
 ## Eksportgrense
 - [x] Personeiere og Playbook Studio: eksport opptil 500 000 filtrerte rader, puljevis henting; 8 tester grønne, CSV-nedlastinger og paginering over 1 000 verifisert med eiertilgang, anonym personeksport blokkert; ingen reimport.
