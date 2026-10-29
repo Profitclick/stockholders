@@ -44,6 +44,54 @@ export type Database = {
         }
         Relationships: []
       }
+      background_exports: {
+        Row: {
+          created_at: string
+          created_by: string
+          cursor: Json
+          error: string | null
+          filters: Json
+          id: string
+          lease_until: string | null
+          parts: Json
+          row_count: number
+          source: string
+          status: string
+          updated_at: string
+          worker_token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          cursor?: Json
+          error?: string | null
+          filters?: Json
+          id?: string
+          lease_until?: string | null
+          parts?: Json
+          row_count?: number
+          source: string
+          status?: string
+          updated_at?: string
+          worker_token?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          cursor?: Json
+          error?: string | null
+          filters?: Json
+          id?: string
+          lease_until?: string | null
+          parts?: Json
+          row_count?: number
+          source?: string
+          status?: string
+          updated_at?: string
+          worker_token?: string
+        }
+        Relationships: []
+      }
       business_raw: {
         Row: {
           address: string | null
@@ -1492,6 +1540,30 @@ export type Database = {
         | { Args: { p_after_name?: string; p_limit?: number }; Returns: Json }
         | { Args: { p_limit?: number; p_offset?: number }; Returns: number }
       bulk_score_investors: { Args: { p_weights?: Json }; Returns: Json }
+      claim_background_export: {
+        Args: { p_id: string; p_token: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          cursor: Json
+          error: string | null
+          filters: Json
+          id: string
+          lease_until: string | null
+          parts: Json
+          row_count: number
+          source: string
+          status: string
+          updated_at: string
+          worker_token: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "background_exports"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       cleanup_shareholder_data: { Args: { p_limit?: number }; Returns: Json }
       cross_reference_plugin: { Args: { p_plugin_id: string }; Returns: Json }
       detect_yoy_triggers: { Args: { p_limit?: number }; Returns: Json }
