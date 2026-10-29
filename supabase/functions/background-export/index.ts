@@ -66,11 +66,11 @@ Deno.serve(async req=>{
         if(error) throw new Error('Kunne ikke lagre eksportfilen');
         parts.push({path,rows:count,bytes:blob.size});
       }
-      const {error}=await db.from('background_exports').update({status:done?'completed':'queued',cursor,parts,row_count:job.row_count+count,lease_until:null,error:null,updated_at:new Date().toISOString()}).eq('id',job.id).eq('status','running');
+      const {error}=await db.from('background_exports').update({status:done?'completed':'queued',cursor,parts,row_count:job.row_count+count,lease_until:null,error:null,updated_at:new Date().toISOString()}).eq('id',job.id).eq('worker_token',work.data.token).eq('status','running');
       if(error) throw new Error('Kunne ikke lagre fremdrift');
       return response({ok:true});
     } catch(e) {
-      await db.from('background_exports').update({status:'failed',error:e instanceof Error?e.message:'Export failed',lease_until:null,updated_at:new Date().toISOString()}).eq('id',job.id).eq('status','running');
+      await db.from('background_exports').update({status:'failed',error:e instanceof Error?e.message:'Export failed',lease_until:null,updated_at:new Date().toISOString()}).eq('id',job.id).eq('worker_token',work.data.token).eq('status','running');
       return response({error:'Export failed; saved parts can be resumed'},500);
     }
   }
