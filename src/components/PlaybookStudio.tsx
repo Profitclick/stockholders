@@ -14,6 +14,7 @@ import * as XLSX from "xlsx";
 import Papa from "papaparse";
 import { collectExportPages, exportLimit, MAX_EXPORT_ROWS } from "@/lib/exportLimits";
 import { RetailMarketTargets } from "@/components/RetailMarketTargets";
+import { BackgroundExportButton } from "@/components/BackgroundExports";
 
 type SignalRow = {
   orgnr: string;
@@ -431,6 +432,12 @@ export function PlaybookStudio() {
             <Button size="sm" variant="outline" onClick={() => exportRows("xlsx")} disabled={rows.length === 0 || loading || exporting}>
               <Download className="mr-2 h-3 w-3" /> Excel
             </Button>
+            <BackgroundExportButton source="playbook" disabled={loading || exporting} filters={{
+              playbook: active, orgnr: validCompany ?? undefined,
+              minScore: Number(minScore) || 0,
+              minRevenue: minRevenue ? Number(minRevenue) : undefined,
+              municipality, skattefunn: needSkattefunn, contract: needContract, contact: needContact,
+            }} />
             <span className="self-center text-xs text-muted-foreground">
               {exporting ? `Eksport: ${nf.format(exportCount)} rader hentet` : loading ? "Henter…" : `${nf.format(rows.length)} vist av ${nf.format(total)} treff`}
             </span>
