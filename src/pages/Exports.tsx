@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Download, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
+import { BackgroundExports } from "@/components/BackgroundExports";
 
 interface Export {
   id: string;
@@ -107,6 +108,8 @@ export default function Exports() {
           </Table>
         </CardContent>
       </Card>
+
+      <BackgroundExports />
 
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         <DialogContent className="max-w-lg">

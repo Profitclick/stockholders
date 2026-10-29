@@ -17,6 +17,7 @@ import { PersonAnnualPortfolio, formatPersonPct } from "@/components/PersonAnnua
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collectExportPages, MAX_EXPORT_ROWS } from "@/lib/exportLimits";
 import { toast } from "sonner";
+import { BackgroundExportButton } from "@/components/BackgroundExports";
 
 const TRENDS: Record<string, string> = {
   all: "Alle", new_2025: "Ny eier 2025", new_2024: "Ny eier 2024", new_2023: "Ny eier 2023", new_2022: "Ny eier 2022", new_2021: "Ny eier 2021", new_2020: "Ny eier 2020", new_2019: "Ny eier 2019", new_2018: "Ny eier 2018",
@@ -139,9 +140,17 @@ export default function PersonOwners() {
             Eierandeler 2017–2025. Alle årganger 2017–2025 er innlastet fra prosjektets egen lagring. Kun eiertilgang.
           </p>
         </div>
+        <div className="flex flex-wrap gap-2">
+        <BackgroundExportButton source="owners" disabled={busy || !!error} filters={{
+          prefix: /^\d{9}$/.test(q.trim()) ? "" : q.trim(),
+          orgnr: /^\d{9}$/.test(q.trim()) ? q.trim() : undefined,
+          person: person?.name, birthYear: person?.birth_year,
+          trend, minPct: Number(minPct) || 0,
+        }} />
         <Button size="sm" variant="outline" onClick={exportCsv} disabled={busy || exporting || !rows.length || !!error}>
           {exporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />} {exporting ? `Hentet ${exportCount.toLocaleString("nb-NO")}` : "CSV (maks 500 000)"}
         </Button>
+        </div>
       </div>
       {person ? (
         <div className="flex items-center gap-2">
