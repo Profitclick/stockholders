@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowUpDown, Download, Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import Papa from "papaparse";
+import { CRYPTO_RE, brokerScore, cryptoScore, gearingScore } from "@/lib/retailPropensity";
 
 type Row = {
   orgnr: string; name: string; symbol: string; market: string | null; currency: string | null;
@@ -130,6 +131,7 @@ export function RetailMarketTargets() {
       orgnr: r.orgnr, selskap: r.name, ticker: r.symbol, marked: r.market, kurs: r.last_price, valuta: r.currency,
       dagsomsetning: r.turnover, eiere: r.total_shareholders, nettmegler_pct: r.retail_pct,
       nettmegler_endring_pp: r.retail_shift_pp, personandel_endring_pp: r.direct_person_shift_pp,
+      short_pct: r.short_pct, gearing_score: r.gearing, nettmegler_score: r.broker, krypto_score: r.crypto,
       malgruppe_indikasjon: audienceTags(r).join(" | "), kursdato: r.quote_date,
     })), { delimiter: ";" });
     const a = document.createElement("a");
@@ -154,7 +156,8 @@ export function RetailMarketTargets() {
             <CardTitle className="text-sm">Retail-segmenter – Oslo Børs / Euronext</CardTitle>
             <p className="text-xs text-muted-foreground mt-1">Velg segment, søk og eksporter. Målgruppe-tagger er indikasjoner på selskapsnivå, ikke fakta om enkeltpersoner.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={syncShort} disabled={syncing}>Hent shortregister</Button>
             <Button size="sm" variant="outline" onClick={sync} disabled={syncing}>
               {syncing ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <RefreshCw className="mr-2 h-3 w-3" />}Hent kurser
             </Button>
@@ -192,7 +195,8 @@ export function RetailMarketTargets() {
                 <TableHead>Selskap</TableHead><TableHead>Målgruppe</TableHead>
                 <SortHead k="last_price">Kurs</SortHead><SortHead k="turnover">Omsetning</SortHead>
                 <SortHead k="total_shareholders">Eiere</SortHead><SortHead k="direct_person_shift_pp">Person Δ pp</SortHead>
-                <SortHead k="retail_pct">Nettmegler %</SortHead>
+                <SortHead k="retail_pct">Nettmegler %</SortHead><SortHead k="short_pct">Short %</SortHead>
+                <SortHead k="gearing">Gearing</SortHead><SortHead k="broker">Nettmegler-score</SortHead>
               </TableRow></TableHeader>
               <TableBody>{visible.map((r) => (
                 <TableRow key={r.orgnr}>
@@ -203,6 +207,9 @@ export function RetailMarketTargets() {
                   <TableCell className="text-right">{r.total_shareholders ?? "–"}</TableCell>
                   <TableCell className="text-right">{pp(r.direct_person_shift_pp)}</TableCell>
                   <TableCell className="text-right">{r.retail_pct == null ? "–" : `${nf.format(r.retail_pct)} (${pp(r.retail_shift_pp)})`}</TableCell>
+                  <TableCell className="text-right">{r.short_pct == null ? "–" : nf.format(r.short_pct)}</TableCell>
+                  <TableCell className="text-right font-semibold">{r.gearing}</TableCell>
+                  <TableCell className="text-right">{r.broker}</TableCell>
                 </TableRow>
               ))}</TableBody>
             </Table>
