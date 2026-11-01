@@ -1319,6 +1319,33 @@ export type Database = {
           },
         ]
       }
+      short_positions: {
+        Row: {
+          as_of: string | null
+          holders: number
+          isin: string
+          issuer_name: string
+          short_pct: number
+          updated_at: string
+        }
+        Insert: {
+          as_of?: string | null
+          holders?: number
+          isin: string
+          issuer_name: string
+          short_pct?: number
+          updated_at?: string
+        }
+        Update: {
+          as_of?: string | null
+          holders?: number
+          isin?: string
+          issuer_name?: string
+          short_pct?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           created_at: string
