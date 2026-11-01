@@ -9,20 +9,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowUpDown, Download, Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import Papa from "papaparse";
+import { CRYPTO_RE, brokerScore, cryptoScore, gearingScore } from "@/lib/retailPropensity";
 
 type Row = {
   orgnr: string; name: string; symbol: string; market: string | null; currency: string | null;
   last_price: number | null; turnover: number | null; total_shareholders: number | null;
   retail_pct: number | null; direct_person_shift_pp: number | null; retail_shift_pp: number | null; quote_date: string | null;
+  short_pct: number | null; gearing: number; broker: number; crypto: number;
 };
 
-type SegmentId = "all" | "penny" | "crypto" | "ai" | "broker";
-const CRYPTO = /(block|bitcoin|crypto|krypto|chain|coin|web3|token|nbx|digital asset)/i;
+type SegmentId = "all" | "penny" | "crypto" | "ai" | "broker" | "short" | "hot";
+const CRYPTO = CRYPTO_RE;
 const AI = /(\bai\b|artificial|data|tech|software|fintech|robot|quantum|cyber|cloud|analytics|digital)/i;
 
 export const SEGMENTS: { id: SegmentId; label: string; hint: string; test: (r: Row) => boolean }[] = [
   { id: "all", label: "Alle", hint: "Alle noterte retail-kandidater", test: () => true },
+  { id: "hot", label: "Gearing-score ≥ 70", hint: "Lav kurs, høy omsetning og short-press", test: (r) => r.gearing >= 70 },
   { id: "penny", label: "Penny & gearing", hint: "Kurs under 2 og omsetning over 0,2 M", test: (r) => (r.last_price ?? 99) < 2 && (r.turnover ?? 0) > 200_000 },
+  { id: "short", label: "Short-press", hint: "Netto short ≥ 1 % i Finanstilsynets register", test: (r) => (r.short_pct ?? 0) >= 1 },
   { id: "crypto", label: "Krypto & Web3", hint: "Blokkjede/krypto i selskapsnavnet", test: (r) => CRYPTO.test(r.name) },
   { id: "ai", label: "AI & tech", hint: "Teknologi/AI/fintech i selskapsnavnet", test: (r) => AI.test(r.name) },
   { id: "broker", label: "Bred nettmegler-base", hint: "Nettmeglerandel minst 15 %", test: (r) => (r.retail_pct ?? 0) >= 15 },
@@ -33,6 +37,7 @@ export function audienceTags(r: Row): string[] {
   const tags: string[] = [];
   if ((r.retail_pct ?? 0) >= 10) tags.push("Nordnet/nettmegler");
   if ((r.last_price ?? 99) < 5 && (r.turnover ?? 0) > 200_000) tags.push("CFD/gearing");
+  if ((r.short_pct ?? 0) >= 1) tags.push("Short-press");
   if (CRYPTO.test(r.name)) tags.push("Krypto");
   return tags;
 }
@@ -40,7 +45,7 @@ export function audienceTags(r: Row): string[] {
 const nf = new Intl.NumberFormat("nb-NO", { maximumFractionDigits: 2 });
 const mnok = (v: number | null) => (v == null ? "–" : `${nf.format(v / 1e6)} M`);
 const pp = (v: number | null) => (v == null ? "–" : `${v > 0 ? "+" : ""}${nf.format(v)}`);
-type SortKey = "turnover" | "last_price" | "total_shareholders" | "retail_pct" | "direct_person_shift_pp";
+type SortKey = "turnover" | "last_price" | "total_shareholders" | "retail_pct" | "direct_person_shift_pp" | "short_pct" | "gearing" | "broker";
 
 export function RetailMarketTargets() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -48,18 +53,42 @@ export function RetailMarketTargets() {
   const [syncing, setSyncing] = useState(false);
   const [segment, setSegment] = useState<SegmentId>("all");
   const [q, setQ] = useState("");
-  const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: "turnover", desc: true });
+  const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: "gearing", desc: true });
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("retail_market_targets")
-      .select("orgnr,name,symbol,market,currency,last_price,turnover,total_shareholders,retail_pct,direct_person_shift_pp,retail_shift_pp,quote_date")
-      .order("turnover", { ascending: false, nullsFirst: false }).limit(1000);
-    if (error) toast.error(error.message);
-    setRows((data as Row[]) ?? []);
+    const [t, mq, sp] = await Promise.all([
+      supabase.from("retail_market_targets")
+        .select("orgnr,name,symbol,market,currency,last_price,turnover,total_shareholders,retail_pct,direct_person_shift_pp,retail_shift_pp,quote_date")
+        .order("turnover", { ascending: false, nullsFirst: false }).limit(1000),
+      supabase.from("market_quotes").select("orgnr,isin").limit(5000),
+      supabase.from("short_positions").select("isin,short_pct").limit(5000),
+    ]);
+    const err = t.error ?? mq.error ?? sp.error;
+    if (err) toast.error(err.message);
+    const isinOf = new Map((mq.data ?? []).map((m) => [m.orgnr, m.isin]));
+    const shortOf = new Map((sp.data ?? []).map((s) => [s.isin, Number(s.short_pct)]));
+    setRows(((t.data ?? []) as Omit<Row, "short_pct" | "gearing" | "broker" | "crypto">[]).map((r) => {
+      const short_pct = shortOf.get(isinOf.get(r.orgnr) ?? "") ?? null;
+      const x = { ...r, short_pct };
+      return { ...x, gearing: gearingScore(x), broker: brokerScore(x), crypto: cryptoScore(x) };
+    }));
     setLoading(false);
   }, []);
   useEffect(() => { load(); }, [load]);
+
+  const syncShort = async () => {
+    setSyncing(true);
+    const { data, error } = await supabase.functions.invoke("short-register-sync");
+    setSyncing(false);
+    if (error) {
+      const details = error instanceof FunctionsHttpError ? await error.context.text() : error.message;
+      toast.error(`Shortregister feilet: ${details}`);
+      return;
+    }
+    toast.success(`${data.active} aksjer med aktiv short hentet fra Finanstilsynet`);
+    load();
+  };
 
   const sync = async () => {
     setSyncing(true);
@@ -102,6 +131,7 @@ export function RetailMarketTargets() {
       orgnr: r.orgnr, selskap: r.name, ticker: r.symbol, marked: r.market, kurs: r.last_price, valuta: r.currency,
       dagsomsetning: r.turnover, eiere: r.total_shareholders, nettmegler_pct: r.retail_pct,
       nettmegler_endring_pp: r.retail_shift_pp, personandel_endring_pp: r.direct_person_shift_pp,
+      short_pct: r.short_pct, gearing_score: r.gearing, nettmegler_score: r.broker, krypto_score: r.crypto,
       malgruppe_indikasjon: audienceTags(r).join(" | "), kursdato: r.quote_date,
     })), { delimiter: ";" });
     const a = document.createElement("a");
@@ -126,7 +156,8 @@ export function RetailMarketTargets() {
             <CardTitle className="text-sm">Retail-segmenter – Oslo Børs / Euronext</CardTitle>
             <p className="text-xs text-muted-foreground mt-1">Velg segment, søk og eksporter. Målgruppe-tagger er indikasjoner på selskapsnivå, ikke fakta om enkeltpersoner.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={syncShort} disabled={syncing}>Hent shortregister</Button>
             <Button size="sm" variant="outline" onClick={sync} disabled={syncing}>
               {syncing ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <RefreshCw className="mr-2 h-3 w-3" />}Hent kurser
             </Button>
@@ -164,7 +195,8 @@ export function RetailMarketTargets() {
                 <TableHead>Selskap</TableHead><TableHead>Målgruppe</TableHead>
                 <SortHead k="last_price">Kurs</SortHead><SortHead k="turnover">Omsetning</SortHead>
                 <SortHead k="total_shareholders">Eiere</SortHead><SortHead k="direct_person_shift_pp">Person Δ pp</SortHead>
-                <SortHead k="retail_pct">Nettmegler %</SortHead>
+                <SortHead k="retail_pct">Nettmegler %</SortHead><SortHead k="short_pct">Short %</SortHead>
+                <SortHead k="gearing">Gearing</SortHead><SortHead k="broker">Nettmegler-score</SortHead>
               </TableRow></TableHeader>
               <TableBody>{visible.map((r) => (
                 <TableRow key={r.orgnr}>
@@ -175,6 +207,9 @@ export function RetailMarketTargets() {
                   <TableCell className="text-right">{r.total_shareholders ?? "–"}</TableCell>
                   <TableCell className="text-right">{pp(r.direct_person_shift_pp)}</TableCell>
                   <TableCell className="text-right">{r.retail_pct == null ? "–" : `${nf.format(r.retail_pct)} (${pp(r.retail_shift_pp)})`}</TableCell>
+                  <TableCell className="text-right">{r.short_pct == null ? "–" : nf.format(r.short_pct)}</TableCell>
+                  <TableCell className="text-right font-semibold">{r.gearing}</TableCell>
+                  <TableCell className="text-right">{r.broker}</TableCell>
                 </TableRow>
               ))}</TableBody>
             </Table>
