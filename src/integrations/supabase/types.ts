@@ -852,6 +852,33 @@ export type Database = {
         }
         Relationships: []
       }
+      newsweb_flags: {
+        Row: {
+          issuer_name: string | null
+          issuer_sign: string | null
+          message_id: number
+          published_time: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          issuer_name?: string | null
+          issuer_sign?: string | null
+          message_id: number
+          published_time?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          issuer_name?: string | null
+          issuer_sign?: string | null
+          message_id?: number
+          published_time?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       nominee_accounts: {
         Row: {
           account_name: string

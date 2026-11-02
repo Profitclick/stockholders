@@ -14,6 +14,7 @@ import * as XLSX from "xlsx";
 import Papa from "papaparse";
 import { collectExportPages, exportLimit, MAX_EXPORT_ROWS } from "@/lib/exportLimits";
 import { RetailMarketTargets } from "@/components/RetailMarketTargets";
+import { NewsWebFlagTargets } from "@/components/NewsWebFlagTargets";
 import { BackgroundExportButton } from "@/components/BackgroundExports";
 
 type SignalRow = {
@@ -381,6 +382,7 @@ export function PlaybookStudio() {
         ))}
       </div>
       {active === "retail-investorer" && <RetailMarketTargets />}
+      {active === "retail-investorer" && <NewsWebFlagTargets />}
 
       <Card>
         <CardHeader className="pb-3">
