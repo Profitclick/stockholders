@@ -16,6 +16,7 @@ import { collectExportPages, exportLimit, MAX_EXPORT_ROWS } from "@/lib/exportLi
 import { RetailMarketTargets } from "@/components/RetailMarketTargets";
 import { NewsWebFlagTargets } from "@/components/NewsWebFlagTargets";
 import { BackgroundExportButton } from "@/components/BackgroundExports";
+import { CompanyProfileSheet } from "@/components/CompanyProfileSheet";
 
 type SignalRow = {
   orgnr: string;
@@ -135,6 +136,7 @@ export function PlaybookStudio() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [ingesting, setIngesting] = useState(false);
+  const [openOrg, setOpenOrg] = useState<string | null>(null);
 
   const [minScore, setMinScore] = useState(validCompany ? "0" : "40");
   const [minRevenue, setMinRevenue] = useState("");
@@ -476,7 +478,7 @@ export function PlaybookStudio() {
                 </TableRow>
               ) : (
                 rows.map((r) => (
-                  <TableRow key={r.orgnr}>
+                  <TableRow key={r.orgnr} className="cursor-pointer" onClick={() => setOpenOrg(r.orgnr)} title="Åpne selskapsprofil">
                     <TableCell>
                       <div className="font-medium text-sm">{r.name}</div>
                       <div className="text-xs text-muted-foreground font-mono">
@@ -518,6 +520,7 @@ export function PlaybookStudio() {
           </Table>
         </CardContent>
       </Card>
+      <CompanyProfileSheet orgnr={openOrg} onClose={() => setOpenOrg(null)} />
     </div>
   );
 }

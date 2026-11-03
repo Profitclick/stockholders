@@ -1,3 +1,4 @@
+import { requireAdmin } from "../_shared/requireAdmin.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { callAllemannsdata, mapWithConcurrency } from "../_shared/allemannsdata.ts";
 
@@ -24,6 +25,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
+  const denied = await requireAdmin(req, corsHeaders, { allowService: true });
+  if (denied) return denied;
 
   try {
     const supabase = createClient(

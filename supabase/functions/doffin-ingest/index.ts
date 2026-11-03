@@ -1,3 +1,4 @@
+import { requireAdmin } from "../_shared/requireAdmin.ts";
 // Ingests awarded public contracts from Doffin (via Allemannsdata) and links
 // winners to registered companies so procurement becomes a scoring signal.
 // Runs in bounded page windows and self-chains so long crawls never time out.
@@ -29,6 +30,8 @@ function normalizeName(name: string): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const denied = await requireAdmin(req, corsHeaders, { allowService: true });
+  if (denied) return denied;
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
