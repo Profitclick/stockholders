@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import { PersonOwnerTimeline } from "@/components/PersonOwnerTimeline";
 
 type Profile = {
   signals: Record<string, any> | null;
@@ -82,6 +83,9 @@ export function CompanyProfileSheet({ orgnr, onClose }: { orgnr: string | null; 
                 <Row label="Majoritetsskifter" value={p.history.majority_count} />
                 <Row label="Økt / redusert ≥20 pp" value={`${p.history.increase_count} / ${p.history.decrease_count}`} />
               </> : <p className="text-sm text-muted-foreground">Ingen historiske personeiersignaler.</p>}
+            </Section>
+            <Section title="Eierhistorie per person">
+              <PersonOwnerTimeline orgnr={orgnr!} />
             </Section>
             <Section title={`Depot- og eierprofil ${p.platform?.year ?? ""}`}>
               {p.platform ? <>
