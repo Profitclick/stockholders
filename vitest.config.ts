@@ -11,6 +11,6 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src"), "npm:zod@3": "zod" },
+    alias: { "@": path.resolve(__dirname, "./src"), "npm:zod@3": "zod", "npm:@lovable.dev/ai-gateway@0.1.11": "@lovable.dev/ai-gateway" },
   },
 });

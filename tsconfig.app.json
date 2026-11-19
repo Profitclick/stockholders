@@ -17,6 +17,9 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "paths": {
+      "npm:@lovable.dev/ai-gateway@0.1.11": [
+        "./node_modules/@lovable.dev/ai-gateway"
+      ],
       "@/*": [
         "./src/*"
       ]

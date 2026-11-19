@@ -1,5 +1,9 @@
 # Roadmap
 
+## Ownership AI cost reduction
+- [x] Switch ownership summaries to the approved GPT-5.4 mini model and remove forced reasoning.
+- [x] Three request regression tests passed; deployed and verified an authenticated summary in the UI (HTTP 200, 1.274 s, 0.00789 requested credits for this test). Comparable quality and realized savings remain unmeasured.
+
 ## Bakgrunnseksport
 - [x] Admin-låst, varig eksportkø med puljevise CSV-filer i privat Cloud Storage; ingen reimport.
 - [x] Eierportefølje og Playbook: start eksport, fremdrift, gjenopptakelse og nedlasting i arkivet.
